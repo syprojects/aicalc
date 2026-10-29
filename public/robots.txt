@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aicalc.sysarticles.com/sitemap.xml
