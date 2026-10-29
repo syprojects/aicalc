@@ -54,8 +54,6 @@ export const DEFAULT_CONFIG = BASE;
 export interface Scenario {
   id: string;
   emoji: string;
-  title: string;
-  desc: string;
   apply: (c: Config) => Config;
 }
 
@@ -66,12 +64,12 @@ const scenario = (hwId: string, chips: number, modelId: string, over: Partial<Co
 });
 
 export const SCENARIOS: Scenario[] = [
-  { id: 'home', emoji: '🏠', title: 'Evde ilk adım', desc: 'RTX 3060 12GB + Llama 8B Q4', apply: scenario('rtx3060_12', 1, 'llama31_8b', { weightBits: 4.5, batch: 1, context: 8192, prompt: 500 }) },
-  { id: 'gamer', emoji: '🎮', title: 'Oyuncu kartı', desc: 'RTX 5090 + Qwen3 32B Q4', apply: scenario('rtx5090', 1, 'qwen3_32b', { weightBits: 4.5, batch: 1, context: 16384, prompt: 1000 }) },
-  { id: 'mac', emoji: '🍎', title: 'Mac Studio', desc: 'M3 Ultra 512GB + DeepSeek R1 Q4', apply: scenario('apple_m3ultra', 1, 'deepseek_v3', { weightBits: 4.5, batch: 1, context: 16384, prompt: 1000 }) },
-  { id: 'office', emoji: '🏢', title: 'Şirket içi asistan', desc: '2× L40S + 70B FP8, 16 kişi', apply: scenario('nvidia_l40s', 2, 'llama33_70b', { weightBits: 8, batch: 16, context: 8192, prompt: 1500 }) },
-  { id: 'saas', emoji: '🚀', title: 'SaaS / API servisi', desc: '8× H200 + DeepSeek V3, 64 kişi', apply: scenario('nvidia_h200', 8, 'deepseek_v3', { weightBits: 8, batch: 64, context: 16384, prompt: 2000 }) },
-  { id: 'tpu', emoji: '🔥', title: 'TPU vs GPU', desc: 'Ironwood TPU + 70B FP8', apply: scenario('tpu_ironwood', 1, 'llama33_70b', { weightBits: 8, batch: 1, context: 4096, prompt: 1000 }) },
+  { id: 'home', emoji: '🏠', apply: scenario('rtx3060_12', 1, 'llama31_8b', { weightBits: 4.5, batch: 1, context: 8192, prompt: 500 }) },
+  { id: 'gamer', emoji: '🎮', apply: scenario('rtx5090', 1, 'qwen3_32b', { weightBits: 4.5, batch: 1, context: 16384, prompt: 1000 }) },
+  { id: 'mac', emoji: '🍎', apply: scenario('apple_m3ultra', 1, 'deepseek_v3', { weightBits: 4.5, batch: 1, context: 16384, prompt: 1000 }) },
+  { id: 'office', emoji: '🏢', apply: scenario('nvidia_l40s', 2, 'llama33_70b', { weightBits: 8, batch: 16, context: 8192, prompt: 1500 }) },
+  { id: 'saas', emoji: '🚀', apply: scenario('nvidia_h200', 8, 'deepseek_v3', { weightBits: 8, batch: 64, context: 16384, prompt: 2000 }) },
+  { id: 'tpu', emoji: '🔥', apply: scenario('tpu_ironwood', 1, 'llama33_70b', { weightBits: 8, batch: 1, context: 4096, prompt: 1000 }) },
 ];
 
 // ---------------------------------------------------------------------------

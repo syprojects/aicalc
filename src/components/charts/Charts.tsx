@@ -2,41 +2,49 @@ import { useMemo, useState } from 'react';
 import { HARDWARE, categoryColor, type Category } from '../../data/hardware';
 import { compute, costAnalysis, type Metrics } from '../../lib/engine';
 import type { Config } from '../../lib/config';
-import { num, tokens, tps, usdSmart } from '../../lib/format';
+import { num, pct, tokSec, tokens, tps, usdSmart } from '../../lib/format';
+import { useI18n } from '../../lib/i18n';
+import { useTheme } from '../../lib/theme';
 import { Pills } from '../ui';
-import { AXIS, EChart, TOOLTIP, grad, type Option } from './EChart';
+import { EChart, chartTheme, grad, type Option } from './EChart';
 
 const BATCHES = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
 const CONTEXTS = [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072];
+
+// Grafiklerin ortak bağımlılıkları: dil sözlüğü + tema renkleri.
+function useChartEnv() {
+  const { t, lang } = useI18n();
+  const { theme } = useTheme();
+  const ct = useMemo(() => chartTheme(theme), [theme]);
+  return { t, lang, theme, ct };
+}
 
 // ---------------------------------------------------------------------------
 // Batch ölçekleme: kullanıcı sayısı arttıkça hız ve toplam üretim
 // ---------------------------------------------------------------------------
 function BatchChart({ cfg }: { cfg: Config }) {
+  const { t, lang, ct } = useChartEnv();
   const option = useMemo<Option>(() => {
     const limit = compute(cfg.hw, cfg.chips, { ...cfg, batch: 1 }).maxBatch;
     const xs = [...new Set([...BATCHES, ...(limit >= 1 && limit < 512 ? [limit] : [])])].sort((a, b) => a - b);
     const pts = xs.map((b) => ({ b, m: compute(cfg.hw, cfg.chips, { ...cfg, batch: b }) }));
     const firstOom = limit < 512 ? Math.max(1, limit + 0.5) : undefined;
+    const ts = tokSec();
     return {
       animationDuration: 500,
       animationDurationUpdate: 400,
       grid: { left: 56, right: 56, top: 40, bottom: 36 },
-      tooltip: {
-        ...TOOLTIP,
-        trigger: 'axis',
-        valueFormatter: (v: number) => `${tps(v)} tok/sn`,
-      },
-      legend: { top: 0, textStyle: { color: '#cbd5e1', fontSize: 11 }, itemWidth: 14, itemHeight: 8 },
-      xAxis: { type: 'log', logBase: 2, min: 1, max: 512, name: 'Eşzamanlı kullanıcı', nameLocation: 'middle', nameGap: 24, ...AXIS, splitLine: { show: false } },
+      tooltip: { ...ct.TOOLTIP, trigger: 'axis', valueFormatter: (v: number) => `${tps(v)} ${ts}` },
+      legend: { top: 0, textStyle: { color: ct.text, fontSize: 11 }, itemWidth: 14, itemHeight: 8 },
+      xAxis: { type: 'log', logBase: 2, min: 1, max: 512, name: t.charts.users, nameLocation: 'middle', nameGap: 24, ...ct.AXIS, splitLine: { show: false } },
       yAxis: [
-        { type: 'value', name: 'Toplam tok/sn', ...AXIS },
-        { type: 'value', name: 'Kişi başı', ...AXIS, splitLine: { show: false } },
+        { type: 'value', name: t.charts.totalTps, ...ct.AXIS },
+        { type: 'value', name: t.charts.perUserAxis, ...ct.AXIS, splitLine: { show: false } },
       ],
       series: [
         {
           id: 'sys',
-          name: 'Toplam üretim',
+          name: t.charts.totalSeries,
           type: 'line',
           smooth: true,
           showSymbol: true,
@@ -46,30 +54,31 @@ function BatchChart({ cfg }: { cfg: Config }) {
           itemStyle: { color: '#a855f7' },
           areaStyle: { color: grad('rgba(168,85,247,.45)', 'rgba(168,85,247,0)') },
           markArea: firstOom
-            ? { silent: true, itemStyle: { color: 'rgba(244,63,94,.08)' }, label: { show: true, color: '#fb7185', fontSize: 10, position: 'insideTop' }, data: [[{ name: 'OOM — belleğe sığmaz', xAxis: firstOom }, { xAxis: 512 }]] }
+            ? { silent: true, itemStyle: { color: 'rgba(244,63,94,.08)' }, label: { show: true, color: '#e11d48', fontSize: 10, position: 'insideTop' }, data: [[{ name: t.charts.oomZone, xAxis: firstOom }, { xAxis: 512 }]] }
             : { data: [] },
           markLine: {
             silent: true,
             symbol: 'none',
-            label: { formatter: `Siz: ${cfg.batch}`, color: '#fbbf24', fontSize: 10 },
-            lineStyle: { color: '#fbbf24', type: 'dashed' },
+            label: { formatter: t.charts.you(cfg.batch), color: ct.highlight, fontSize: 10 },
+            lineStyle: { color: ct.highlight, type: 'dashed' },
             data: [{ xAxis: cfg.batch }],
           },
         },
         {
           id: 'user',
-          name: 'Kullanıcı başı hız',
+          name: t.charts.perUserSeries,
           type: 'line',
           yAxisIndex: 1,
           smooth: true,
           symbolSize: 6,
           data: pts.map((p) => [p.b, p.m.fits ? p.m.perUserTps : null]),
-          lineStyle: { width: 3, color: '#22d3ee' },
-          itemStyle: { color: '#22d3ee' },
+          lineStyle: { width: 3, color: '#06b6d4' },
+          itemStyle: { color: '#06b6d4' },
         },
       ],
     };
-  }, [cfg]);
+    // lang: birimler (tok/sn ↔ tok/s) format modülünden okunduğu için yeniden hesaplama gerekir
+  }, [cfg, t, ct, lang]);
   return <EChart option={option} />;
 }
 
@@ -77,43 +86,44 @@ function BatchChart({ cfg }: { cfg: Config }) {
 // Bağlam uzunluğu: kaç kullanıcıya hizmet verilebilir?
 // ---------------------------------------------------------------------------
 function ContextChart({ cfg }: { cfg: Config }) {
+  const { t, lang, ct } = useChartEnv();
   const option = useMemo<Option>(() => {
     const pts = CONTEXTS.map((ctx) => ({ ctx, m: compute(cfg.hw, cfg.chips, { ...cfg, context: ctx, prompt: Math.min(cfg.prompt, ctx) }) }));
     return {
       animationDurationUpdate: 400,
       grid: { left: 56, right: 56, top: 40, bottom: 36 },
-      tooltip: { ...TOOLTIP, trigger: 'axis' },
-      legend: { top: 0, textStyle: { color: '#cbd5e1', fontSize: 11 }, itemWidth: 14, itemHeight: 8 },
-      xAxis: { type: 'category', data: pts.map((p) => tokens(p.ctx)), name: 'Bağlam (token)', nameLocation: 'middle', nameGap: 24, ...AXIS },
+      tooltip: { ...ct.TOOLTIP, trigger: 'axis' },
+      legend: { top: 0, textStyle: { color: ct.text, fontSize: 11 }, itemWidth: 14, itemHeight: 8 },
+      xAxis: { type: 'category', data: pts.map((p) => tokens(p.ctx)), name: t.charts.ctxAxis, nameLocation: 'middle', nameGap: 24, ...ct.AXIS },
       yAxis: [
-        { type: 'value', name: 'Max kullanıcı', ...AXIS },
-        { type: 'value', name: 'tok/sn', ...AXIS, splitLine: { show: false } },
+        { type: 'value', name: t.charts.maxUsers, ...ct.AXIS },
+        { type: 'value', name: tokSec(), ...ct.AXIS, splitLine: { show: false } },
       ],
       series: [
         {
           id: 'users',
-          name: 'Maksimum eşzamanlı kullanıcı',
+          name: t.charts.maxUsersSeries,
           type: 'bar',
           barWidth: '55%',
           data: pts.map((p) => ({
             value: p.m.maxBatch,
             itemStyle: { color: p.ctx === cfg.context ? grad('#fbbf24', '#f97316') : grad('#a855f7', 'rgba(99,102,241,.5)'), borderRadius: [6, 6, 0, 0] },
           })),
-          label: { show: true, position: 'top', color: '#cbd5e1', fontSize: 10, fontFamily: 'JetBrains Mono Variable' },
+          label: { show: true, position: 'top', color: ct.text, fontSize: 10, fontFamily: 'JetBrains Mono Variable' },
         },
         {
           id: 'speed',
-          name: `${cfg.batch} kullanıcıda kişi başı hız`,
+          name: t.charts.speedAt(cfg.batch),
           type: 'line',
           yAxisIndex: 1,
           smooth: true,
           data: pts.map((p) => (p.m.fits ? +p.m.perUserTps.toFixed(1) : null)),
-          lineStyle: { width: 3, color: '#22d3ee' },
-          itemStyle: { color: '#22d3ee' },
+          lineStyle: { width: 3, color: '#06b6d4' },
+          itemStyle: { color: '#06b6d4' },
         },
       ],
     };
-  }, [cfg]);
+  }, [cfg, t, ct, lang]);
   return <EChart option={option} />;
 }
 
@@ -121,6 +131,7 @@ function ContextChart({ cfg }: { cfg: Config }) {
 // Roofline: bellek mi, işlem gücü mü sınırlıyor?
 // ---------------------------------------------------------------------------
 function RooflineChart({ cfg, m }: { cfg: Config; m: Metrics }) {
+  const { t, lang, ct } = useChartEnv();
   const option = useMemo<Option>(() => {
     const peak = m.effTflops * 0.65;
     const bwTb = m.effBwGbs / 1000;
@@ -138,74 +149,70 @@ function RooflineChart({ cfg, m }: { cfg: Config; m: Metrics }) {
       animationDurationUpdate: 400,
       grid: { left: 60, right: 24, top: 30, bottom: 44 },
       tooltip: {
-        ...TOOLTIP,
+        ...ct.TOOLTIP,
         trigger: 'item',
         formatter: (p: { seriesName: string; name: string; value: number[] }) =>
-          `${p.seriesName}${p.name ? ` · ${p.name}` : ''}<br/>Yoğunluk: <b>${num(p.value[0], 1)}</b> FLOP/byte<br/>Elde edilen: <b>${num(p.value[1], 0)}</b> TFLOPS`,
+          `${p.seriesName}${p.name ? ` · ${p.name}` : ''}<br/>FLOP/byte: <b>${num(p.value[0], 1)}</b><br/>${t.charts.achieved}: <b>${num(p.value[1], 0)}</b> TFLOPS`,
       },
-      xAxis: { type: 'log', min: 0.1, max: 10000, name: 'Aritmetik yoğunluk (FLOP / byte)', nameLocation: 'middle', nameGap: 28, ...AXIS },
-      yAxis: { type: 'log', name: 'TFLOPS', ...AXIS, min: Math.max(0.01, peak / 10000) },
+      xAxis: { type: 'log', min: 0.1, max: 10000, name: t.charts.intensity, nameLocation: 'middle', nameGap: 28, ...ct.AXIS },
+      yAxis: { type: 'log', name: 'TFLOPS', ...ct.AXIS, min: Math.max(0.01, peak / 10000) },
       series: [
         {
           id: 'roof',
-          name: 'Donanım tavanı',
+          name: t.charts.roofSeries,
           type: 'line',
           showSymbol: false,
           data: roof,
-          lineStyle: { width: 3, color: '#22d3ee' },
+          lineStyle: { width: 3, color: '#06b6d4' },
           areaStyle: { color: grad('rgba(34,211,238,.18)', 'rgba(34,211,238,0)') },
           markLine: {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: 'rgba(148,163,184,.4)', type: 'dashed' },
-            label: { formatter: `Kırılma: ${num(ridge, 0)}`, color: '#94a3b8', fontSize: 10 },
+            lineStyle: { color: ct.muted, type: 'dashed', opacity: 0.6 },
+            label: { formatter: t.charts.ridge(num(ridge, 0)), color: ct.muted, fontSize: 10 },
             data: [{ xAxis: ridge }],
           },
         },
         {
           id: 'trail',
-          name: 'Farklı batch',
+          name: t.charts.batches,
           type: 'scatter',
           symbolSize: 9,
           data: trail,
           itemStyle: { color: 'rgba(168,85,247,.6)' },
-          label: { show: true, formatter: '{b}', position: 'right', color: '#a78bfa', fontSize: 10 },
+          label: { show: true, formatter: '{b}', position: 'right', color: '#8b5cf6', fontSize: 10 },
         },
         {
           id: 'you',
-          name: 'Sizin kurulumunuz',
+          name: t.charts.yours,
           type: 'scatter',
           symbolSize: 18,
           data: [{ value: [m.arithIntensity, m.arithIntensity * m.bwUsedTbs], name: `batch ${cfg.batch}` }],
-          itemStyle: { color: '#fbbf24', shadowBlur: 20, shadowColor: '#fbbf24' },
+          itemStyle: { color: '#f59e0b', shadowBlur: 20, shadowColor: '#fbbf24' },
         },
       ],
     };
-  }, [cfg, m]);
+  }, [cfg, m, t, ct, lang]);
   return <EChart option={option} />;
 }
 
 export function AnalysisCharts({ cfg, m }: { cfg: Config; m: Metrics }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<'batch' | 'ctx' | 'roof'>('batch');
-  const desc = {
-    batch: 'Kullanıcı sayısı arttıkça toplam üretim katlanır, kişi başı hız yavaşça düşer. Kırmızı alan belleğin yetmediği bölgedir.',
-    ctx: 'Bağlam uzadıkça her kullanıcının KV cache\'i büyür; aynı bellekle hizmet verilebilecek kişi sayısı azalır.',
-    roof: 'Noktanız eğik çizgideyse bellek bant genişliği, düz tavandaysa işlem gücü sınırlıyor demektir. LLM üretimi neredeyse her zaman eğik bölgededir.',
-  }[tab];
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <Pills
           options={[
-            { value: 'batch', label: 'Kullanıcı ölçekleme' },
-            { value: 'ctx', label: 'Bağlam → kapasite' },
-            { value: 'roof', label: 'Roofline' },
+            { value: 'batch', label: t.charts.tabs.batch },
+            { value: 'ctx', label: t.charts.tabs.ctx },
+            { value: 'roof', label: t.charts.tabs.roof },
           ]}
           value={tab}
           onChange={setTab}
         />
       </div>
-      <p className="mb-2 text-xs text-slate-400">{desc}</p>
+      <p className="mb-2 text-xs text-slate-400">{t.charts.desc[tab]}</p>
       {tab === 'batch' && <BatchChart cfg={cfg} />}
       {tab === 'ctx' && <ContextChart cfg={cfg} />}
       {tab === 'roof' && <RooflineChart cfg={cfg} m={m} />}
@@ -219,6 +226,7 @@ export function AnalysisCharts({ cfg, m }: { cfg: Config; m: Metrics }) {
 export type RaceMetric = 'single' | 'system' | 'cost';
 
 export function HardwareRace({ cfg, onSelect, category }: { cfg: Config; onSelect: (id: string) => void; category: Category | 'all' }) {
+  const { t, lang, ct } = useChartEnv();
   const [metric, setMetric] = useState<RaceMetric>('single');
   const rows = useMemo(() => {
     return HARDWARE.filter((h) => category === 'all' || h.category === category)
@@ -236,29 +244,38 @@ export function HardwareRace({ cfg, onSelect, category }: { cfg: Config; onSelec
   }, [cfg, metric, category]);
 
   const option = useMemo<Option>(() => {
-    const fmt = metric === 'cost' ? usdSmart : (v: number) => `${tps(v)} tok/sn`;
+    const ts = tokSec();
+    const fmt = metric === 'cost' ? usdSmart : (v: number) => `${tps(v)} ${ts}`;
     const maxVal = Math.max(...rows.map((r) => r.value), 1);
     return {
       animationDurationUpdate: 500,
       grid: { left: 8, right: 70, top: 4, bottom: 4, containLabel: true },
       tooltip: {
-        ...TOOLTIP,
+        ...ct.TOOLTIP,
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
         formatter: (ps: { dataIndex: number }[]) => {
           const r = rows[ps[0].dataIndex];
-          return `<b>${r.chips}× ${r.h.name}</b><br/>${r.m.fits ? `${metric === 'cost' ? '1M token' : 'Hız'}: <b>${fmt(r.value)}</b><br/>Bellek: %${num(r.m.utilPct)} · max ${num(r.m.maxBatch)} kullanıcı` : '<span style="color:#fb7185">Belleğe sığmaz (OOM)</span>'}<br/><span style="color:#64748b">Seçmek için tıklayın</span>`;
+          return `<b>${r.chips}× ${r.h.name}</b><br/>${
+            r.m.fits ? `${metric === 'cost' ? '1M token' : t.charts.speed}: <b>${fmt(r.value)}</b><br/>${t.charts.memory}: ${pct(r.m.utilPct)} · ${t.charts.upTo(num(r.m.maxBatch))}` : `<span style="color:#e11d48">${t.charts.oomLong}</span>`
+          }<br/><span style="color:${ct.muted}">${t.charts.clickToSelect}</span>`;
         },
       },
-      xAxis: { type: metric === 'cost' ? 'log' : 'value', ...AXIS, axisLabel: { show: false }, splitLine: { show: false }, min: metric === 'cost' ? Math.max(0.001, Math.min(...rows.filter((r) => r.value > 0).map((r) => r.value)) / 2) : 0 },
+      xAxis: {
+        type: metric === 'cost' ? 'log' : 'value',
+        ...ct.AXIS,
+        axisLabel: { show: false },
+        splitLine: { show: false },
+        min: metric === 'cost' ? Math.max(0.001, Math.min(...rows.filter((r) => r.value > 0).map((r) => r.value)) / 2) : 0,
+      },
       yAxis: {
         type: 'category',
         data: rows.map((r) => `${r.chips > 1 ? `${r.chips}× ` : ''}${r.h.short}`),
-        ...AXIS,
+        ...ct.AXIS,
         axisLabel: {
-          ...AXIS.axisLabel,
+          ...ct.AXIS.axisLabel,
           fontSize: 11,
-          color: (_: unknown, i: number) => (rows[i]?.h.id === cfg.hwId ? '#fbbf24' : rows[i]?.m.fits ? '#cbd5e1' : '#475569'),
+          color: (_: unknown, i: number) => (rows[i]?.h.id === cfg.hwId ? ct.highlight : rows[i]?.m.fits ? ct.text : ct.dimmed),
         },
         axisTick: { show: false },
       },
@@ -270,12 +287,12 @@ export function HardwareRace({ cfg, onSelect, category }: { cfg: Config; onSelec
           data: rows.map((r) => ({
             value: r.m.fits ? r.value : metric === 'cost' ? null : maxVal * 0.012,
             itemStyle: {
-              color: r.m.fits ? grad(categoryColor(r.h.category) + '55', categoryColor(r.h.category), false) : '#334155',
+              color: r.m.fits ? grad(categoryColor(r.h.category) + '55', categoryColor(r.h.category), false) : ct.oomBar,
               borderRadius: [0, 6, 6, 0],
-              borderColor: r.h.id === cfg.hwId ? '#fbbf24' : 'transparent',
+              borderColor: r.h.id === cfg.hwId ? ct.highlight : 'transparent',
               borderWidth: 2,
               shadowBlur: r.h.id === cfg.hwId ? 16 : 0,
-              shadowColor: '#fbbf24',
+              shadowColor: ct.highlight,
             },
           })),
           label: {
@@ -283,22 +300,22 @@ export function HardwareRace({ cfg, onSelect, category }: { cfg: Config; onSelec
             position: 'right',
             fontFamily: 'JetBrains Mono Variable',
             fontSize: 10,
-            color: '#e2e8f0',
+            color: ct.text,
             formatter: (p: { dataIndex: number }) => (rows[p.dataIndex].m.fits ? fmt(rows[p.dataIndex].value) : 'OOM'),
           },
         },
       ],
     };
-  }, [rows, metric, cfg.hwId]);
+  }, [rows, metric, cfg.hwId, t, ct, lang]);
 
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <Pills
           options={[
-            { value: 'single', label: 'Tek kullanıcı hızı' },
-            { value: 'system', label: `${cfg.batch} kullanıcı toplam` },
-            { value: 'cost', label: '$ / 1M token (düşük iyi)' },
+            { value: 'single', label: t.charts.race.single },
+            { value: 'system', label: t.charts.race.system(cfg.batch) },
+            { value: 'cost', label: t.charts.race.cost },
           ]}
           value={metric}
           onChange={setMetric}
@@ -313,39 +330,48 @@ export function HardwareRace({ cfg, onSelect, category }: { cfg: Config; onSelec
 // Maliyet: zaman içinde kümülatif harcama (kira vs satın al vs API)
 // ---------------------------------------------------------------------------
 export function CostTimeline({ cfg, m, completeSystem }: { cfg: Config; m: Metrics; completeSystem: boolean }) {
+  const { t, lang, ct } = useChartEnv();
   const option = useMemo<Option>(() => {
     const c = costAnalysis(cfg.hw, cfg.chips, m, cfg, completeSystem);
     const monthsN = Math.max(12, cfg.years * 12);
     const x = Array.from({ length: monthsN + 1 }, (_, i) => i);
     const series: unknown[] = [
-      { id: 'rent', name: 'Bulutta kirala', type: 'line', smooth: true, showSymbol: false, data: x.map((i) => Math.round(c.rentMonthly * i)), lineStyle: { width: 3, color: '#fbbf24' }, areaStyle: { color: grad('rgba(251,191,36,.25)', 'rgba(251,191,36,0)') } },
-      { id: 'api', name: 'Hazır API kullan', type: 'line', smooth: true, showSymbol: false, data: x.map((i) => Math.round(c.apiMonthly * i)), lineStyle: { width: 3, color: '#22d3ee', type: 'dashed' } },
+      { id: 'rent', name: t.charts.rentLine, type: 'line', smooth: true, showSymbol: false, data: x.map((i) => Math.round(c.rentMonthly * i)), lineStyle: { width: 3, color: '#f59e0b' }, areaStyle: { color: grad('rgba(251,191,36,.25)', 'rgba(251,191,36,0)') } },
+      { id: 'api', name: t.charts.apiLine, type: 'line', smooth: true, showSymbol: false, data: x.map((i) => Math.round(c.apiMonthly * i)), lineStyle: { width: 3, color: '#06b6d4', type: 'dashed' } },
     ];
     if (c.capex !== null) {
       series.push({
         id: 'buy',
-        name: 'Satın al + elektrik',
+        name: t.charts.buyLine,
         type: 'line',
         smooth: true,
         showSymbol: false,
         data: x.map((i) => Math.round(c.capex! + c.powerMonthly * i)),
-        lineStyle: { width: 3, color: '#f472b6' },
+        lineStyle: { width: 3, color: '#ec4899' },
         areaStyle: { color: grad('rgba(244,114,182,.2)', 'rgba(244,114,182,0)') },
         markPoint:
           c.breakEvenMonths !== null && c.breakEvenMonths <= monthsN
-            ? { symbol: 'pin', symbolSize: 44, itemStyle: { color: '#f472b6' }, label: { formatter: 'Başabaş', fontSize: 9, color: '#0a0e1a' }, data: [{ coord: [Math.round(c.breakEvenMonths), Math.round(c.capex! + c.powerMonthly * c.breakEvenMonths)] }] }
+            ? {
+                symbol: 'pin',
+                symbolSize: 44,
+                itemStyle: { color: '#ec4899' },
+                label: { formatter: t.charts.breakEven, fontSize: 9, color: '#fff' },
+                data: [{ coord: [Math.round(c.breakEvenMonths), Math.round(c.capex! + c.powerMonthly * c.breakEvenMonths)] }],
+              }
             : { data: [] },
       });
+    } else {
+      series.push({ id: 'buy', type: 'line', data: [] });
     }
     return {
       animationDurationUpdate: 400,
       grid: { left: 64, right: 20, top: 36, bottom: 36 },
-      legend: { top: 0, textStyle: { color: '#cbd5e1', fontSize: 11 } },
-      tooltip: { ...TOOLTIP, trigger: 'axis', valueFormatter: (v: number) => `$${num(v)}` },
-      xAxis: { type: 'category', data: x, name: 'Ay', nameLocation: 'middle', nameGap: 24, ...AXIS, boundaryGap: false },
-      yAxis: { type: 'value', ...AXIS, axisLabel: { ...AXIS.axisLabel, formatter: (v: number) => (v >= 1000 ? `$${num(v / 1000)}K` : `$${v}`) } },
+      legend: { top: 0, textStyle: { color: ct.text, fontSize: 11 } },
+      tooltip: { ...ct.TOOLTIP, trigger: 'axis', valueFormatter: (v: number) => `$${num(v)}` },
+      xAxis: { type: 'category', data: x, name: t.charts.month, nameLocation: 'middle', nameGap: 24, ...ct.AXIS, boundaryGap: false },
+      yAxis: { type: 'value', ...ct.AXIS, axisLabel: { ...ct.AXIS.axisLabel, formatter: (v: number) => (v >= 1000 ? `$${num(v / 1000)}K` : `$${v}`) } },
       series,
     };
-  }, [cfg, m, completeSystem]);
+  }, [cfg, m, completeSystem, t, ct, lang]);
   return <EChart option={option} height={300} />;
 }

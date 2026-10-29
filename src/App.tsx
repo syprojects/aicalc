@@ -3,6 +3,7 @@ import { BarChart3 } from 'lucide-react';
 import { CATEGORIES, type Category } from './data/hardware';
 import { SCENARIOS, fromQuery, toQuery, withHardware, type Config } from './lib/config';
 import { compute, type Metrics } from './lib/engine';
+import { useI18n } from './lib/i18n';
 import { HardwarePanel, ModelPanel, WorkloadPanel, type SetCfg } from './components/Controls';
 import { KpiGrid, MemoryBreakdown, MobileSummary, SpeedPreview, StatusBanner } from './components/Results';
 import { Advisor, CompareTable, CostSection } from './components/Sections';
@@ -28,6 +29,7 @@ function CostTimeline(props: { cfg: Config; m: Metrics; completeSystem: boolean 
 }
 
 export default function App() {
+  const { t, lang } = useI18n();
   const [cfg, setCfg] = useState<Config>(() => fromQuery(window.location.search));
   const set: SetCfg = useCallback((fn) => setCfg((c) => fn(c)), []);
   const [shareOpen, setShareOpen] = useState(false);
@@ -42,9 +44,9 @@ export default function App() {
   const activeScenario = useMemo(() => SCENARIOS.find((s) => toQuery(s.apply(cfg)) === query)?.id ?? null, [cfg, query]);
 
   useEffect(() => {
-    const t = setTimeout(() => window.history.replaceState(null, '', `?${query}${window.location.hash}`), 250);
-    return () => clearTimeout(t);
-  }, [query]);
+    const timer = setTimeout(() => window.history.replaceState(null, '', `?${query}&lang=${lang}${window.location.hash}`), 250);
+    return () => clearTimeout(timer);
+  }, [query, lang]);
 
   const selectHw = useCallback(
     (id: string) => {
@@ -57,7 +59,7 @@ export default function App() {
 
   return (
     <>
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div aria-hidden className="aurora pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-[10%] -top-[20%] h-[60vh] w-[60vw] animate-aurora rounded-full bg-cyan-500/20 blur-[120px]" />
         <div className="absolute -right-[10%] top-[10%] h-[55vh] w-[50vw] animate-aurora rounded-full bg-violet-600/20 blur-[120px] [animation-delay:-7s]" />
         <div className="absolute bottom-[-20%] left-[30%] h-[50vh] w-[45vw] animate-aurora rounded-full bg-pink-500/10 blur-[120px] [animation-delay:-14s]" />
@@ -70,8 +72,8 @@ export default function App() {
         <Hero set={set} activeScenario={activeScenario} />
 
         <section className="pt-8">
-          <SectionHeading id="hesapla-s" kicker="01 · Hesaplayıcı" title="Kurulumunu oluştur, sonucu canlı izle" />
-          <div className="grid items-start gap-5 lg:grid-cols-12">
+          <SectionHeading id="hesapla-s" kicker={t.sec.calc.kicker} title={t.sec.calc.title} />
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
             <div className="space-y-5 lg:sticky lg:top-20 lg:col-span-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1 lg:[scrollbar-width:thin]">
               <HardwarePanel cfg={cfg} set={set} />
               <ModelPanel cfg={cfg} set={set} />
@@ -84,7 +86,7 @@ export default function App() {
               <MemoryBreakdown m={m} cfg={cfg} />
               <Card className="p-5">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white">
-                  <BarChart3 className="h-4 w-4 text-neon-pink" /> Analiz grafikleri
+                  <BarChart3 className="h-4 w-4 text-neon-pink" /> {t.sec.calc.charts}
                 </h3>
                 <Suspense fallback={<ChartFallback />}>
                   <AnalysisCharts cfg={dcfg} m={dm} />
@@ -97,9 +99,9 @@ export default function App() {
         <section className="pt-20">
           <SectionHeading
             id="danisman-s"
-            kicker="02 · Donanım danışmanı"
-            title={<>Hedefini söyle, <span className="text-gradient">uygun donanımı</span> bulalım</>}
-            desc="Kaç kişinin aynı anda kullanacağını ve beklediğin hızı seç. Seçili modeli bu hedefle çalıştırabilen en küçük kurulumları sıralıyoruz."
+            kicker={t.sec.advisor.kicker}
+            title={<>{t.sec.advisor.t1}<span className="text-gradient">{t.sec.advisor.hi}</span>{t.sec.advisor.t2}</>}
+            desc={t.sec.advisor.desc}
           />
           <Advisor cfg={dcfg} set={set} onApplied={goCalc} />
         </section>
@@ -107,9 +109,9 @@ export default function App() {
         <section className="pt-20">
           <SectionHeading
             id="maliyet-s"
-            kicker="03 · Maliyet"
-            title="Satın almak mı, kiralamak mı, API mi?"
-            desc="Elektrik, amortisman ve kullanım süresine göre üç yolun aylık maliyetini ve başabaş noktasını karşılaştır."
+            kicker={t.sec.cost.kicker}
+            title={t.sec.cost.title}
+            desc={t.sec.cost.desc}
           />
           <CostSection cfg={dcfg} set={set} m={dm} Timeline={CostTimeline} />
         </section>
@@ -117,14 +119,14 @@ export default function App() {
         <section className="pt-20">
           <SectionHeading
             id="karsilastir-s"
-            kicker="04 · Karşılaştırma"
-            title="Aynı model, tüm donanımlarda"
-            desc="Çubuklara veya satırlara tıklayarak donanımı hesaplayıcıya aktarabilirsin."
+            kicker={t.sec.compare.kicker}
+            title={t.sec.compare.title}
+            desc={t.sec.compare.desc}
           />
           <div className="mb-4">
-            <Pills options={CATEGORIES.map((c) => ({ value: c.id, label: c.label }))} value={cat} onChange={setCat} />
+            <Pills options={CATEGORIES.map((c) => ({ value: c.id, label: t.cat[c.id] }))} value={cat} onChange={setCat} />
           </div>
-          <div className="grid gap-5 xl:grid-cols-12">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
             <Card className="p-5 xl:col-span-5">
               <Suspense fallback={<ChartFallback h={600} />}>
                 <HardwareRace cfg={dcfg} onSelect={selectHw} category={cat} />
@@ -137,7 +139,7 @@ export default function App() {
         </section>
 
         <section className="pt-20">
-          <SectionHeading id="rehber-s" kicker="05 · Rehber" title="Bu işe yeni başlayanlar için her şey" desc="Kavramlar, pratik kurallar, doğru yazılım ve en sık sorulan sorular." />
+          <SectionHeading id="rehber-s" kicker={t.sec.guide.kicker} title={t.sec.guide.title} desc={t.sec.guide.desc} />
           <Guide />
         </section>
       </main>

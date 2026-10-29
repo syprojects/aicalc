@@ -33,7 +33,7 @@ export function Hint({ text }: { text: string }) {
       <Info className="h-3.5 w-3.5 cursor-help text-slate-500 transition group-hover:text-neon-cyan" aria-label={text} />
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-lg border border-white/10 bg-ink-800 p-2.5 text-[11px] font-normal normal-case leading-relaxed tracking-normal text-slate-200 opacity-0 shadow-xl transition group-hover:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-64 max-w-[80vw] -translate-x-1/2 rounded-lg border border-white/10 bg-ink-800 p-2.5 text-[11px] font-normal normal-case leading-relaxed tracking-normal text-slate-200 shadow-xl group-hover:block"
       >
         {text}
       </span>

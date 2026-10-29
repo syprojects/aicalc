@@ -9,6 +9,23 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="canonical" href="https://aicalc.sysarticles.com/" />
 
+    <!-- Tema: ilk boyamadan önce kayıtlı tercihi uygula (yanıp sönmeyi önler). Varsayılan koyu. -->
+    <script>
+      try {
+        if (localStorage.getItem('aicalc-theme') === 'light') document.documentElement.dataset.theme = 'light';
+      } catch (e) {}
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YQ993H3XNZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      // Yerel geliştirme ziyaretleri istatistiklere karışmasın.
+      if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) gtag('config', 'G-YQ993H3XNZ');
+    </script>
+
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://aicalc.sysarticles.com/" />
     <meta property="og:title" content="AI Donanım & LLM Çıkarım Hesaplayıcı" />

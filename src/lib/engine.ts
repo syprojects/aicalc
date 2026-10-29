@@ -258,10 +258,10 @@ export function recommend(w: Workload, users: number, minTps: number, sort: RecS
   return out.sort(sorters[sort]);
 }
 
-// İnsan okuma hızına göre akıcılık yorumu (Türkçe ortalama ≈ 4-6 token/sn okuma).
-export function speedVerdict(tps: number): { label: string; tone: 'bad' | 'warn' | 'ok' | 'great' } {
-  if (tps < 5) return { label: 'Yavaş — okuma hızının altında', tone: 'bad' };
-  if (tps < 15) return { label: 'Okunabilir — sohbet için yeterli', tone: 'warn' };
-  if (tps < 50) return { label: 'Akıcı — ChatGPT benzeri deneyim', tone: 'ok' };
-  return { label: 'Çok hızlı — ajan / kod üretimi için ideal', tone: 'great' };
+// İnsan okuma hızına göre akıcılık sınıfı (ortalama okuma ≈ 4-6 token/sn); etiketler i18n sözlüğündedir.
+export function speedVerdict(tps: number): 'bad' | 'warn' | 'ok' | 'great' {
+  if (tps < 5) return 'bad';
+  if (tps < 15) return 'warn';
+  if (tps < 50) return 'ok';
+  return 'great';
 }

@@ -20,18 +20,17 @@ export interface Hardware {
   maxChips: number;
 }
 
-export const CATEGORIES: { id: Category | 'all'; label: string; color: string }[] = [
-  { id: 'all', label: 'Tümü', color: '#e2e8f0' },
-  { id: 'consumer', label: 'GeForce / Ev', color: '#22d3ee' },
-  { id: 'workstation', label: 'İş İstasyonu', color: '#2dd4bf' },
-  { id: 'apple', label: 'Apple Mac', color: '#e879f9' },
-  { id: 'datacenter', label: 'NVIDIA Sunucu', color: '#84cc16' },
-  { id: 'amd', label: 'AMD', color: '#f43f5e' },
-  { id: 'tpu', label: 'Google TPU', color: '#fbbf24' },
+export const CATEGORIES: { id: Category | 'all'; color: string }[] = [
+  { id: 'all', color: '#e2e8f0' },
+  { id: 'consumer', color: '#22d3ee' },
+  { id: 'workstation', color: '#2dd4bf' },
+  { id: 'apple', color: '#e879f9' },
+  { id: 'datacenter', color: '#84cc16' },
+  { id: 'amd', color: '#f43f5e' },
+  { id: 'tpu', color: '#fbbf24' },
 ];
 
 export const categoryColor = (c: Category) => CATEGORIES.find((x) => x.id === c)?.color ?? '#94a3b8';
-export const categoryLabel = (c: Category) => CATEGORIES.find((x) => x.id === c)?.label ?? c;
 
 export const HARDWARE: Hardware[] = [
   // GeForce / tüketici

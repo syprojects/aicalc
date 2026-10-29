@@ -39,20 +39,30 @@ export function EChart({ option, height = 320, onClick }: { option: Option; heig
   return <div ref={el} style={{ height }} className="w-full" />;
 }
 
-// Ortak koyu tema parçaları
-export const AXIS = {
-  axisLine: { lineStyle: { color: 'rgba(148,163,184,.25)' } },
-  axisLabel: { color: '#94a3b8', fontFamily: 'JetBrains Mono Variable, monospace', fontSize: 10 },
-  splitLine: { lineStyle: { color: 'rgba(148,163,184,.08)' } },
-  nameTextStyle: { color: '#94a3b8', fontSize: 11 },
-};
-
-export const TOOLTIP = {
-  backgroundColor: 'rgba(10,14,26,.95)',
-  borderColor: 'rgba(148,163,184,.2)',
-  textStyle: { color: '#e2e8f0', fontSize: 12 },
-  extraCssText: 'border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(8px);',
-};
+// Açık / koyu temaya göre eksen, ipucu ve yazı renkleri
+export function chartTheme(theme: 'dark' | 'light') {
+  const light = theme === 'light';
+  const muted = light ? '#475569' : '#94a3b8';
+  return {
+    text: light ? '#1e293b' : '#cbd5e1',
+    muted,
+    dimmed: light ? '#94a3b8' : '#475569',
+    oomBar: light ? '#cbd5e1' : '#334155',
+    highlight: light ? '#b45309' : '#fbbf24',
+    AXIS: {
+      axisLine: { lineStyle: { color: light ? 'rgba(15,23,42,.2)' : 'rgba(148,163,184,.25)' } },
+      axisLabel: { color: muted, fontFamily: 'JetBrains Mono Variable, monospace', fontSize: 10 },
+      splitLine: { lineStyle: { color: light ? 'rgba(15,23,42,.07)' : 'rgba(148,163,184,.08)' } },
+      nameTextStyle: { color: muted, fontSize: 11 },
+    },
+    TOOLTIP: {
+      backgroundColor: light ? 'rgba(255,255,255,.97)' : 'rgba(10,14,26,.95)',
+      borderColor: light ? 'rgba(15,23,42,.12)' : 'rgba(148,163,184,.2)',
+      textStyle: { color: light ? '#0f172a' : '#e2e8f0', fontSize: 12 },
+      extraCssText: `border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,${light ? '.12' : '.5'});backdrop-filter:blur(8px);`,
+    },
+  };
+}
 
 export const grad = (a: string, b: string, vertical = true) =>
   new echarts.graphic.LinearGradient(0, 0, vertical ? 0 : 1, vertical ? 1 : 0, [
