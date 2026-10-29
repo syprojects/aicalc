@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aicalc.sysarticles.com | LLM Çıkarım, Bellek Darboğazı ve Donanım Hesaplayıcı</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        sys: {
+                            bg: '#090d16',
+                            panel: '#111827',
+                            card: '#1a2234',
+                            border: '#26324d',
+                            cyan: '#38bdf8',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e',
+                            purple: '#a855f7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #090d16;
+            color: #e2e8f0;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.07) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 50%);
+        }
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            background: #1e293b;
+            height: 6px;
+            border-radius: 999px;
+            border: 1px solid #334155;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -6px;
+            background-color: #38bdf8;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background-color: #7dd3fc;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .glass-card {
+            background: rgba(26, 34, 52, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased selection:bg-sys-cyan selection:text-slate-950">
+
+    <!-- Top Navigation / Header -->
+    <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-sys-bg/90 backdrop-blur-md">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <i class="ph-bold ph-cpu text-slate-950 text-2xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-xs font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">aicalc.sysarticles.com</span>
+                        <span class="hidden sm:inline-block text-xs text-slate-400">v2.6 Engineering Edition</span>
+                    </div>
+                    <h1 class="text-base sm:text-lg font-bold text-white tracking-tight">LLM Çıkarımında Bellek Darboğazı, Batching ve Donanım Hesaplayıcı</h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="openShareModal('linkedin')" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 transition">
+                    <i class="ph-bold ph-share-network text-sm"></i>
+                    <span>LinkedIn / Rapor Kopyala</span>
+                </button>
+                <button onclick="resetToIronwoodDemo()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="70B FP8 + Ironwood TPU Senaryosuna Dön">
+                    <i class="ph-bold ph-arrow-counter-clockwise text-sm"></i>
+                    <span class="hidden md:inline">70B Ironwood Senaryosu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Quick Scenario Presets Bar -->
+        <section class="glass-card rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                <i class="ph-fill ph-lightning text-amber-400 text-base"></i>
+                <span>Hızlı Senaryolar:</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="loadScenario('rtx3060_8b')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    🏠 Ev Kullanıcısı: RTX 3060 12GB + Llama 8B (Q4)
+                </button>
+                <button onclick="loadScenario('mac_70b')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    🍎 Mac Studio: M4 Max 128GB + Llama 70B (Q4)
+                </button>
+                <button onclick="loadScenario('l40s_70b')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                    🏢 Kurumsal Sunucu: 2x L40S + 70B (FP8)
+                </button>
+                <button onclick="loadScenario('ironwood_70b')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition">
+                    🔥 TPU vs GPU Analizi: Ironwood TPU + 70B (FP8)
+                </button>
+                <button onclick="loadScenario('rubin_deepseek')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition">
+                    🚀 MoE Devleri: 4x TPU 8i / Rubin + DeepSeek 671B
+                </button>
+            </div>
+        </section>
+
+        <!-- Grid: Left Configuration Controls (4 cols) & Right Live Results (8 cols) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT PANEL: CONFIGURATION -->
+            <div class="lg:col-span-4 space-y-5">
+
+                <!-- 1. DONANIM SEÇİMİ -->
+                <div class="glass-card rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-duotone ph-graphics-card text-sky-400 text-xl"></i>
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-white">1. Donanım & Küme Seçimi</h2>
+                        </div>
+                        <span id="hwCategoryBadge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-sky-400 border border-slate-700">Veri Merkezi</span>
+                    </div>
+
+                    <!-- Category Filter Pills -->
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1.5">Donanım Kategorisi Filtresi</label>
+                        <div class="grid grid-cols-3 gap-1.5 text-xs" id="categoryFilterContainer">
+                            <button onclick="filterHardwareCategory('all')" data-cat="all" class="cat-btn active px-2 py-1.5 rounded-lg font-medium bg-sky-500 text-slate-950 transition">Tümü</button>
+                            <button onclick="filterHardwareCategory('consumer')" data-cat="consumer" class="cat-btn px-2 py-1.5 rounded-lg font-medium bg-slate-800/80 text-slate-300 hover:bg-slate-700 transition">GeForce / Ev</button>
+                            <button onclick="filterHardwareCategory('datacenter')" data-cat="datacenter" class="cat-btn px-2 py-1.5 rounded-lg font-medium bg-slate-800/80 text-slate-300 hover:bg-slate-700 transition">NVIDIA Sunucu</button>
+                            <button onclick="filterHardwareCategory('tpu')" data-cat="tpu" class="cat-btn px-2 py-1.5 rounded-lg font-medium bg-slate-800/80 text-slate-300 hover:bg-slate-700 transition">Google TPU</button>
+                            <button onclick="filterHardwareCategory('apple')" data-cat="apple" class="cat-btn px-2 py-1.5 rounded-lg font-medium bg-slate-800/80 text-slate-300 hover:bg-slate-700 transition">Apple Mac</button>
+                            <button onclick="filterHardwareCategory('amd')" data-cat="amd" class="cat-btn px-2 py-1.5 rounded-lg font-medium bg-slate-800/80 text-slate-300 hover:bg-slate-700 transition">AMD / Özel</button>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Dropdown -->
+                    <div>
+                        <label for="hardwareSelect" class="block text-xs font-medium text-slate-300 mb-1.5">Çip / Ekran Kartı Modeli</label>
+                        <select id="hardwareSelect" onchange="onHardwareChange()" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-sky-400 font-medium">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Multi-Chip / Tensor Parallelism -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300 font-medium">Çip Adedi (Tensor Parallelism / Multi-GPU)</span>
+                            <span id="chipCountLabel" class="font-mono font-bold text-sky-400">1x Çip</span>
+                        </div>
+                        <div class="grid grid-cols-5 gap-1.5">
+                            <button onclick="setChipCount(1)" data-chips="1" class="chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-sky-500 text-slate-950 transition">1x</button>
+                            <button onclick="setChipCount(2)" data-chips="2" class="chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">2x</button>
+                            <button onclick="setChipCount(4)" data-chips="4" class="chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">4x</button>
+                            <button onclick="setChipCount(8)" data-chips="8" class="chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">8x</button>
+                            <button onclick="setChipCount(16)" data-chips="16" class="chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">16x</button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Hardware Specs Mini-Grid -->
+                    <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80">
+                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                            <label class="block text-[11px] text-slate-400">Çip Başına VRAM/HBM (GB)</label>
+                            <input type="number" id="customVramInput" step="1" min="2" max="2048" onchange="onCustomHwEdit()" class="w-full bg-transparent font-mono text-sm font-bold text-white focus:outline-none mt-0.5">
+                        </div>
+                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                            <label class="block text-[11px] text-slate-400">Çip Bant Genişliği (GB/sn)</label>
+                            <input type="number" id="customBwInput" step="10" min="50" max="50000" onchange="onCustomHwEdit()" class="w-full bg-transparent font-mono text-sm font-bold text-sky-400 focus:outline-none mt-0.5">
+                        </div>
+                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                            <label class="block text-[11px] text-slate-400">FP8/INT8 Gücü (TFLOPS)</label>
+                            <input type="number" id="customTflopsInput" step="10" min="10" max="20000" onchange="onCustomHwEdit()" class="w-full bg-transparent font-mono text-sm font-bold text-emerald-400 focus:outline-none mt-0.5">
+                        </div>
+                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                            <label class="block text-[11px] text-slate-400">Saatlik Maliyet ($/Saat/Çip)</label>
+                            <input type="number" id="customCostInput" step="0.1" min="0.05" max="100" onchange="onCustomHwEdit()" class="w-full bg-transparent font-mono text-sm font-bold text-amber-400 focus:outline-none mt-0.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. MODEL & KUANTİZASYON -->
+                <div class="glass-card rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-duotone ph-brain text-emerald-400 text-xl"></i>
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-white">2. Model & Kuantizasyon</h2>
+                        </div>
+                        <span id="moeBadge" class="hidden text-[11px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">MoE Mimari</span>
+                    </div>
+
+                    <!-- Model Preset Selector -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Hazır Model Mimarisi Seçin</label>
+                        <select id="modelPresetSelect" onchange="onModelPresetChange()" class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-400 font-medium">
+                            <option value="1.5">Qwen-2.5 / Llama-3.2 (1.5B - Kenar Cihaz)</option>
+                            <option value="3">Llama-3.2 (3B - Mobil / Mini)</option>
+                            <option value="8">Llama-3.1 / Qwen-2.5 (8B - Standart)</option>
+                            <option value="14">Qwen-2.5 / Phi-4 (14B - Orta Ölçek)</option>
+                            <option value="32">Qwen-2.5 / DeepSeek-R1-Distill (32B)</option>
+                            <option value="70" selected>Llama-3.3 / Qwen-2.5 (70B - Kurumsal Standart)</option>
+                            <option value="123">Mistral Large 2 (123B - Büyük Ölçek)</option>
+                            <option value="405">Llama-3.1 (405B - Devasa Dense Model)</option>
+                            <option value="moe_mixtral">Mixtral 8x7B MoE (47B Toplam / 13B Aktif)</option>
+                            <option value="moe_qwen">Qwen-2.5-Max / DBRX MoE (140B Toplam / 36B Aktif)</option>
+                            <option value="moe_deepseek">DeepSeek-V3 / R1 MoE (671B Toplam / 37B Aktif)</option>
+                            <option value="custom">Özel Parametre Boyutu (Slider ile)</option>
+                        </select>
+                    </div>
+
+                    <!-- Total Parameters Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Toplam Parametre (Bellekte Tutulan)</span>
+                            <span id="totalParamsValue" class="font-mono font-bold text-emerald-400">70 Milyar (70B)</span>
+                        </div>
+                        <input type="range" id="totalParamsSlider" min="1" max="700" step="0.5" value="70" oninput="onParamsSliderInput()" class="w-full">
+                    </div>
+
+                    <!-- Active Parameters Slider (For MoE) -->
+                    <div id="activeParamsContainer" class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="moeToggle" onchange="onMoeToggle()" class="rounded bg-slate-800 border-slate-700 text-purple-500 focus:ring-0">
+                                <span class="text-slate-300 font-medium">MoE (Mixture of Experts) Modeli mi?</span>
+                            </label>
+                            <span id="activeParamsValue" class="font-mono font-bold text-purple-400">70B Aktif</span>
+                        </div>
+                        <div id="activeSliderWrap" class="hidden pt-1">
+                            <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                                <span>Token Başına Okunan Aktif Parametre:</span>
+                                <span>VRAM tüm modeli, hız aktif parametreyi baz alır</span>
+                            </div>
+                            <input type="range" id="activeParamsSlider" min="1" max="200" step="1" value="37" oninput="onActiveParamsInput()" class="w-full">
+                        </div>
+                    </div>
+
+                    <!-- Weight Quantization -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300 font-medium">Model Ağırlık Kuantizasyonu (Bit)</span>
+                            <span id="quantLabel" class="font-mono font-bold text-sky-400">8-bit (FP8 / INT8)</span>
+                        </div>
+                        <div class="grid grid-cols-5 gap-1.5 text-xs">
+                            <button onclick="setWeightBits(16)" data-bits="16" class="quant-btn py-2 rounded-lg font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">FP16<br><span class="text-[10px] font-normal opacity-75">16-bit</span></button>
+                            <button onclick="setWeightBits(8)" data-bits="8" class="quant-btn py-2 rounded-lg font-mono font-semibold bg-sky-500 text-slate-950 transition">FP8<br><span class="text-[10px] font-normal opacity-90">8-bit</span></button>
+                            <button onclick="setWeightBits(6)" data-bits="6" class="quant-btn py-2 rounded-lg font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Q6_K<br><span class="text-[10px] font-normal opacity-75">6-bit</span></button>
+                            <button onclick="setWeightBits(4.5)" data-bits="4.5" class="quant-btn py-2 rounded-lg font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Q4_K_M<br><span class="text-[10px] font-normal opacity-75">4.5-bit</span></button>
+                            <button onclick="setWeightBits(4)" data-bits="4" class="quant-btn py-2 rounded-lg font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">INT4/AWQ<br><span class="text-[10px] font-normal opacity-75">4-bit</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. İŞ YÜKÜ, BATCHING VE OPTİMİZASYON -->
+                <div class="glass-card rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-duotone ph-sliders-horizontal text-amber-400 text-xl"></i>
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-white">3. Batching & Bağlam (KV Cache)</h2>
+                        </div>
+                    </div>
+
+                    <!-- Batch Size Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300 font-medium">Batch Size (Eşzamanlı Kullanıcı / İstek)</span>
+                            <span id="batchSizeValue" class="font-mono font-bold text-amber-400">1 Kullanıcı</span>
+                        </div>
+                        <input type="range" id="batchSizeSlider" min="1" max="128" step="1" value="1" oninput="updateCalculations()" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                            <button onclick="setBatchQuick(1)" class="hover:text-sky-400">1 (Tekil)</button>
+                            <button onclick="setBatchQuick(8)" class="hover:text-sky-400">8</button>
+                            <button onclick="setBatchQuick(16)" class="hover:text-sky-400">16</button>
+                            <button onclick="setBatchQuick(32)" class="hover:text-sky-400">32</button>
+                            <button onclick="setBatchQuick(64)" class="hover:text-sky-400">64</button>
+                            <button onclick="setBatchQuick(128)" class="hover:text-sky-400">128</button>
+                        </div>
+                    </div>
+
+                    <!-- Context Length Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300 font-medium">Kullanıcı Başı Bağlam (Context Length)</span>
+                            <span id="contextLengthValue" class="font-mono font-bold text-sky-400">4,096 Token</span>
+                        </div>
+                        <input type="range" id="contextLengthSlider" min="512" max="65536" step="512" value="4096" oninput="updateCalculations()" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                            <button onclick="setContextQuick(2048)" class="hover:text-sky-400">2K</button>
+                            <button onclick="setContextQuick(4096)" class="hover:text-sky-400">4K</button>
+                            <button onclick="setContextQuick(8192)" class="hover:text-sky-400">8K</button>
+                            <button onclick="setContextQuick(16384)" class="hover:text-sky-400">16K</button>
+                            <button onclick="setContextQuick(32768)" class="hover:text-sky-400">32K</button>
+                            <button onclick="setContextQuick(65536)" class="hover:text-sky-400">64K</button>
+                        </div>
+                    </div>
+
+                    <!-- KV Cache Quantization & Speculative Decoding -->
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">KV Cache Kuantizasyonu</label>
+                            <select id="kvCacheBitsSelect" onchange="updateCalculations()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-2 text-xs text-white font-mono">
+                                <option value="16">FP16 (16-bit Standart)</option>
+                                <option value="8" selected>FP8 (8-bit Önerilen)</option>
+                                <option value="4">INT4 (4-bit Sıkıştırılmış)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1">Speculative Decoding</label>
+                            <select id="specDecodeSelect" onchange="updateCalculations()" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-2 text-xs text-white font-mono">
+                                <option value="1.0" selected>Kapalı (1.0x Saf Hız)</option>
+                                <option value="1.6">EAGLE / Draft (1.6x Hız)</option>
+                                <option value="2.1">MTP / Medusa (2.1x Hız)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL: KPI METRICS, MEMORY BAR & INTERACTIVE CHARTS -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- STATUS BANNER (Fits in Memory vs OOM Alert) -->
+                <div id="memoryStatusBanner" class="rounded-2xl p-4 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all">
+                    <div class="flex items-start sm:items-center gap-3">
+                        <div id="statusIconBox" class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+                            <i id="statusIcon" class="ph-bold ph-check-circle text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="statusTitle" class="text-sm font-bold text-white">Model ve KV Cache Belleğe Rahatça Sığıyor</h3>
+                                <span id="statusUtilizationBadge" class="text-xs font-mono px-2 py-0.5 rounded font-semibold">40% Doluluk</span>
+                            </div>
+                            <p id="statusDescription" class="text-xs text-slate-300 mt-0.5">Seçili donanımda maksimum 112 eşzamanlı kullanıcıya (Batch Size) kadar çıkabilirsiniz.</p>
+                        </div>
+                    </div>
+                    <div class="text-right font-mono shrink-0">
+                        <div class="text-xs text-slate-400">Gereken / Toplam Bellek</div>
+                        <div id="statusMemoryNumbers" class="text-base font-bold text-white">76.5 GB / 192.0 GB</div>
+                    </div>
+                </div>
+
+                <!-- 4 CORE KPI CARDS (Addressing User's Exact Question: 70GB per Token = 7000 GB/s) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <!-- Card 1: Memory Read Per Token -->
+                    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-sky-400 relative overflow-hidden">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <span>1 Adımda Okunan Veri</span>
+                            <i class="ph-duotone ph-database text-sky-400 text-lg"></i>
+                        </div>
+                        <div id="kpiDataPerToken" class="text-2xl font-mono font-bold text-white">70.2 GB</div>
+                        <div id="kpiTotalBandwidthUsed" class="text-[11px] font-mono text-sky-400 mt-1">Saniyede: 7.40 TB/sn okuma</div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 leading-snug">Her yeni token için aktif ağırlıklar + KV Cache bellekten tekrar çekilir.</p>
+                    </div>
+
+                    <!-- Card 2: Single User Speed (Token/s) -->
+                    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-emerald-400 relative overflow-hidden">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <span>Kullanıcı Başına Hız</span>
+                            <i class="ph-duotone ph-gauge text-emerald-400 text-lg"></i>
+                        </div>
+                        <div id="kpiSingleUserTps" class="text-2xl font-mono font-bold text-emerald-400">105.4 tok/sn</div>
+                        <div id="kpiInterTokenLatency" class="text-[11px] font-mono text-slate-300 mt-1">Gecikme (ITL): 9.5 ms/token</div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 leading-snug">Bant genişliği / Model boyutu formülüyle ulaşılan tekil akış hızı.</p>
+                    </div>
+
+                    <!-- Card 3: Total System Throughput (Batching Effect) -->
+                    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-amber-400 relative overflow-hidden">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <span>Toplam Sistem Üretimi</span>
+                            <i class="ph-duotone ph-stack text-amber-400 text-lg"></i>
+                        </div>
+                        <div id="kpiSystemThroughput" class="text-2xl font-mono font-bold text-amber-400">105.4 tok/sn</div>
+                        <div id="kpiMaxBatchCap" class="text-[11px] font-mono text-slate-300 mt-1">Bellek Tavanı: Max 165 Batch</div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 leading-snug">Ağırlıklar 1 kez okunurken <span id="kpiBatchCountInline" class="text-white font-semibold">1</span> kullanıcının token'ı aynı anda üretilir.</p>
+                    </div>
+
+                    <!-- Card 4: Economics & Energy Efficiency -->
+                    <div class="glass-card rounded-2xl p-4 border-l-4 border-l-purple-400 relative overflow-hidden">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <span>Maliyet & Enerji Özeti</span>
+                            <i class="ph-duotone ph-currency-dollar text-purple-400 text-lg"></i>
+                        </div>
+                        <div id="kpiCostPerMillion" class="text-2xl font-mono font-bold text-purple-300">$0.92 / 1M</div>
+                        <div id="kpiTokensPerWatt" class="text-[11px] font-mono text-slate-300 mt-1">Verim: 0.18 tok/sn/Watt</div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 leading-snug">Batch size arttıkça 1 milyon token üretme maliyeti dramatik düşer.</p>
+                    </div>
+                </div>
+
+                <!-- LIVE MATH FORMULA EXPLAINER BOX -->
+                <div class="glass-card rounded-2xl p-4 border border-sky-500/20 bg-slate-900/70">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                            <i class="ph-bold ph-function text-sm"></i>
+                            Canlı Bellek Darboğazı Denklemi (Memory-Bound Roofline)
+                        </span>
+                        <span id="boundStateBadge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">Bellek Bant Genişliği Sınırlı (Memory-Bound)</span>
+                    </div>
+                    <div id="liveFormulaText" class="font-mono text-xs sm:text-sm text-slate-200 bg-slate-950/90 p-3 rounded-xl border border-slate-800 overflow-x-auto whitespace-nowrap">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- VISUAL MEMORY BREAKDOWN BAR -->
+                <div class="glass-card rounded-2xl p-5 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-white">VRAM / HBM Bellek Dağılımı (Model Ağırlıkları vs. KV Cache)</h3>
+                            <p class="text-xs text-slate-400">Neden 192 GB veya 288 GB belleğe ihtiyaç duyulur? Batch size arttıkça KV Cache belleği doldurur.</p>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs font-mono">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-sky-500 inline-block"></span>Model: <strong id="legendWeightGb" class="text-white">70.0 GB</strong></span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span>KV Cache: <strong id="legendKvGb" class="text-white">1.2 GB</strong></span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-purple-500 inline-block"></span>Sistem/Aktivasyon: <strong id="legendOverheadGb" class="text-white">3.5 GB</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Stacked Progress Bar -->
+                    <div class="w-full h-7 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex p-0.5 relative">
+                        <div id="barWeights" class="h-full bg-sky-500 transition-all duration-300 flex items-center justify-center text-[10px] font-mono font-bold text-slate-950 overflow-hidden" style="width: 35%">Model</div>
+                        <div id="barKvCache" class="h-full bg-amber-500 transition-all duration-300 flex items-center justify-center text-[10px] font-mono font-bold text-slate-950 overflow-hidden" style="width: 5%">KV</div>
+                        <div id="barOverhead" class="h-full bg-purple-500 transition-all duration-300 flex items-center justify-center text-[10px] font-mono font-bold text-white overflow-hidden" style="width: 3%">Sys</div>
+                    </div>
+                </div>
+
+                <!-- CHARTS TABS & VISUALIZATION AREA -->
+                <div class="glass-card rounded-2xl p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="switchChartTab('batch')" id="tabBtnBatch" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-500 text-slate-950 transition flex items-center gap-1.5">
+                                <i class="ph-bold ph-chart-line-up"></i>
+                                <span>Batching & Hız Eğrisi (1 - 128 Kullanıcı)</span>
+                            </button>
+                            <button onclick="switchChartTab('benchmark')" id="tabBtnBenchmark" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5">
+                                <i class="ph-bold ph-chart-bar-horizontal"></i>
+                                <span>Çoklu Donanım Kıyaslama (RTX 3060'tan TPU 8i'ye)</span>
+                            </button>
+                        </div>
+                        <span class="text-[11px] font-mono text-slate-400">Grafik verileri seçimlerinize göre anlık güncellenir</span>
+                    </div>
+
+                    <!-- Chart 1 Container: Batch Size Scaling -->
+                    <div id="chartBatchContainer" class="space-y-2">
+                        <div class="h-[340px] w-full relative">
+                            <canvas id="batchScalingChart"></canvas>
+                        </div>
+                        <p class="text-xs text-slate-400 text-center">
+                            <span class="text-amber-400 font-semibold">Altın Kural:</span> Batch Size arttıkça ağırlıklar bellekten tek seferde okunup tüm kullanıcılara bölüştürüldüğü için <strong>Toplam Sistem Üretimi (Turuncu)</strong> katlanarak artar; ancak KV Cache okuma yükü ve işlemci doygunluğu sebebiyle <strong>Kullanıcı Başına Hız (Yeşil)</strong> kademeli olarak düşer.
+                        </p>
+                    </div>
+
+                    <!-- Chart 2 Container: Multi-Hardware Comparison -->
+                    <div id="chartBenchmarkContainer" class="hidden space-y-2">
+                        <div class="h-[380px] w-full relative">
+                            <canvas id="hardwareBenchmarkChart"></canvas>
+                        </div>
+                        <p class="text-xs text-slate-400 text-center">
+                            Seçtiğiniz <strong id="benchModelLabel" class="text-white">70B (8-bit)</strong> modelin ve <strong id="benchChipMultLabel" class="text-sky-400">1x Çip</strong> kurulumunun popüler donanımlardaki tekil kullanıcı hızı (Token/sn). Kırmızı barlar modelin o donanımın belleğine sığmadığını (OOM) gösterir.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- FULL HARDWARE COMPARISON TABLE SECTION -->
+        <section class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                        <i class="ph-duotone ph-table text-sky-400 text-xl"></i>
+                        <span>Tüm Donanımlar İçin Canlı Uyumluluk ve Performans Tablosu</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        Şu anki modeliniz (<span id="tableModelSummary" class="text-emerald-400 font-mono font-semibold">70B @ 8-bit</span>) ve <span id="tableChipMultSummary" class="text-sky-400 font-mono font-semibold">1x Çip</span> ölçeklemesiyle hangi kartta kaç Token/sn alırsınız, maksimum kaç eşzamanlı kullanıcı (Batch) sığar?
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="tableSearchInput" oninput="renderComparisonTable()" placeholder="Tabloda donanım ara (örn: 3060, L40S, TPU, M4)..." class="w-full sm:w-64 rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-400">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-[11px] font-mono uppercase text-slate-400 bg-slate-900/60">
+                            <th class="py-3 px-3">Donanım Modeli</th>
+                            <th class="py-3 px-3">Kategori</th>
+                            <th class="py-3 px-3 text-right">Toplam VRAM</th>
+                            <th class="py-3 px-3 text-right">Bant Genişliği</th>
+                            <th class="py-3 px-3 text-center">Bellek Durumu</th>
+                            <th class="py-3 px-3 text-right">Tekil Hız (Batch=1)</th>
+                            <th class="py-3 px-3 text-right">Mevcut Batch Toplam</th>
+                            <th class="py-3 px-3 text-right">Max Kullanıcı (Tavan)</th>
+                            <th class="py-3 px-3 text-center">Seç</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hardwareTableBody" class="divide-y divide-slate-800/60 text-xs font-mono">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- EDUCATIONAL DEEP-DIVE CARDS (For Blog / LinkedIn Readers) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div class="glass-card rounded-2xl p-5 space-y-2 border-t-2 border-t-sky-500">
+                <div class="flex items-center gap-2 text-sky-400 font-bold text-sm">
+                    <i class="ph-fill ph-arrows-Clockwise text-lg"></i>
+                    <h3>1. Neden Her Token İçin Tüm Ağırlıklar Okunur?</h3>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Çip üzerindeki ultra hızlı SRAM önbellekler yalnızca birkaç yüz MB büyüklüğündedir. 70 GB'lık bir model SRAM'e sığmadığı için HBM/GDDR bellekte durur. LLM'ler metni kelime kelime (autoregressive) ürettiğinden, her yeni token matris çarpımı için 70 GB ağırlığın tamamı HBM'den çekirdeklere tekrar taşınır. 100 token/sn hız, saniyede <strong>7.000 GB (7 TB)</strong> veri akışı demektir.
+                </p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 space-y-2 border-t-2 border-t-amber-500">
+                <div class="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                    <i class="ph-fill ph-users-three text-lg"></i>
+                    <h3>2. Batching ve 288 GB Bellek Savaşları</h3>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    70 GB ağırlığı bellekten çekmişken sadece 1 kullanıcının girdisiyle çarpmak yerine aynı anda 64 kullanıcının girdisiyle çarparsanız (Continuous Batching), ağırlıkları 1 kez okuyup <strong>64 token</strong> üretirsiniz. Ancak 64 kullanıcının geçmiş konuşma bağlamı (KV Cache) devasa yer kaplar. Google TPU 8i ve Nvidia Rubin/B300'ün <strong>288 GB HBM</strong> ile gelmesinin sebebi daha yüksek Batch Size yakalamaktır.
+                </p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 space-y-2 border-t-2 border-t-purple-500">
+                <div class="flex items-center gap-2 text-purple-400 font-bold text-sm">
+                    <i class="ph-fill ph-git-branch text-lg"></i>
+                    <h3>3. MoE (Mixture of Experts) Modellerin Sırrı</h3>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    DeepSeek-V3/R1 gibi 671B parametreli bir MoE model, tüm uzmanları bellekte tutmak için devasa VRAM'e ihtiyaç duyar. Fakat her token üretiminde yalnızca <strong>37B aktif parametre</strong> okunur. Böylece zeka olarak 671B seviyesinde kalırken, bellek bant genişliği darboğazında 37B'lik bir model kadar hızlı token üretir.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 mt-12 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-[1440px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>
+                <span class="font-bold text-slate-300">aicalc.sysarticles.com</span> — SysArticles Yapay Zeka Altyapı ve Donanım Laboratuvarı
+            </div>
+            <div class="font-mono text-[11px]">
+                Hesaplamalar Roofline Modeli (Memory-Bound Decode & Compute-Bound Prefill) prensiplerine dayanmaktadır.
+            </div>
+        </div>
+    </footer>
+
+    <!-- SHARE / EXPORT MODAL -->
+    <div id="shareModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl max-w-xl w-full p-6 space-y-4 border border-slate-700 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="ph-bold ph-share-network text-sky-400 text-xl"></i>
+                    <h3 class="text-base font-bold text-white">Analiz Raporunu Kopyala & Paylaş</h3>
+                </div>
+                <button onclick="closeShareModal()" class="text-slate-400 hover:text-white">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-300">Aşağıdaki teknik özeti doğrudan LinkedIn paylaşımınıza, teknik blog yazınıza veya ekip içi mesajlaşmanıza yapıştırabilirsiniz:</p>
+
+            <textarea id="shareTextarea" rows="11" readonly class="w-full rounded-xl bg-slate-950 border border-slate-800 p-3.5 font-mono text-xs text-slate-200 focus:outline-none"></textarea>
+
+            <div class="flex items-center justify-end gap-3">
+                <span id="copyFeedback" class="text-xs font-medium text-emerald-400 hidden">✓ Panoya kopyalandı!</span>
+                <button onclick="copyReportToClipboard()" class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition flex items-center gap-1.5">
+                    <i class="ph-bold ph-copy"></i>
+                    <span>Metni Panoya Kopyala</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION JAVASCRIPT -->
+    <script>
+        // ============================================================================
+        // 1. EXTENSIVE HARDWARE DATABASE (Consumer, Server, TPU, Apple Silicon, AMD)
+        // ============================================================================
+        const HARDWARE_DB = [
+            // NVIDIA GeForce Consumer
+            { id: 'rtx3060_8', name: 'NVIDIA RTX 3060 (8 GB)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 8, bw: 240, tflops: 70, tdp: 170, cost: 0.15 },
+            { id: 'rtx3060_12', name: 'NVIDIA RTX 3060 (12 GB)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 12, bw: 360, tflops: 75, tdp: 170, cost: 0.18 },
+            { id: 'rtx4060ti_16', name: 'NVIDIA RTX 4060 Ti (16 GB)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 16, bw: 288, tflops: 165, tdp: 165, cost: 0.25 },
+            { id: 'rtx4070tis_16', name: 'NVIDIA RTX 4070 Ti Super (16 GB)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 16, bw: 672, tflops: 330, tdp: 285, cost: 0.35 },
+            { id: 'rtx3090', name: 'NVIDIA RTX 3090 (24 GB)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 24, bw: 936, tflops: 142, tdp: 350, cost: 0.40 },
+            { id: 'rtx4090', name: 'NVIDIA RTX 4090 (24 GB)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 24, bw: 1008, tflops: 660, tdp: 450, cost: 0.65 },
+            { id: 'rtx5070ti', name: 'NVIDIA RTX 5070 Ti (16 GB GDDR7)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 16, bw: 896, tflops: 450, tdp: 300, cost: 0.45 },
+            { id: 'rtx5080', name: 'NVIDIA RTX 5080 (16 GB GDDR7)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 16, bw: 960, tflops: 560, tdp: 360, cost: 0.55 },
+            { id: 'rtx5090', name: 'NVIDIA RTX 5090 (32 GB GDDR7)', category: 'consumer', catLabel: 'GeForce Tüketici', vram: 32, bw: 1792, tflops: 1050, tdp: 575, cost: 0.95 },
+
+            // NVIDIA Data Center & Enterprise
+            { id: 'nvidia_l4', name: 'NVIDIA L4 (24 GB)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 24, bw: 300, tflops: 242, tdp: 72, cost: 0.80 },
+            { id: 'nvidia_l40', name: 'NVIDIA L40 (48 GB)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 48, bw: 864, tflops: 362, tdp: 300, cost: 1.40 },
+            { id: 'nvidia_l40s', name: 'NVIDIA L40S (48 GB)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 48, bw: 864, tflops: 733, tdp: 350, cost: 1.65 },
+            { id: 'nvidia_a100_40', name: 'NVIDIA A100 (40 GB HBM2)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 40, bw: 1555, tflops: 624, tdp: 400, cost: 1.80 },
+            { id: 'nvidia_a100_80', name: 'NVIDIA A100 (80 GB HBM2e)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 80, bw: 2039, tflops: 624, tdp: 400, cost: 2.20 },
+            { id: 'nvidia_h100', name: 'NVIDIA H100 SXM (80 GB HBM3)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 80, bw: 3350, tflops: 1979, tdp: 700, cost: 3.00 },
+            { id: 'nvidia_h200', name: 'NVIDIA H200 SXM (141 GB HBM3e)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 141, bw: 4800, tflops: 1979, tdp: 700, cost: 3.80 },
+            { id: 'nvidia_b200', name: 'NVIDIA B200 Blackwell (192 GB HBM3e)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 192, bw: 8000, tflops: 4500, tdp: 1000, cost: 5.20 },
+            { id: 'nvidia_b300', name: 'NVIDIA B300 Blackwell Ultra (288 GB)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 288, bw: 8000, tflops: 6000, tdp: 1200, cost: 6.20 },
+            { id: 'nvidia_rubin', name: 'NVIDIA Vera Rubin R100 (288 GB HBM4)', category: 'datacenter', catLabel: 'NVIDIA Sunucu', vram: 288, bw: 13000, tflops: 8000, tdp: 1400, cost: 7.50 },
+
+            // Google Cloud TPU Series
+            { id: 'tpu_v5e', name: 'Google Cloud TPU v5e (16 GB HBM)', category: 'tpu', catLabel: 'Google TPU', vram: 16, bw: 819, tflops: 393, tdp: 200, cost: 1.20 },
+            { id: 'tpu_v5p', name: 'Google Cloud TPU v5p (95 GB HBM)', category: 'tpu', catLabel: 'Google TPU', vram: 95, bw: 2765, tflops: 918, tdp: 450, cost: 2.80 },
+            { id: 'tpu_v6e', name: 'Google TPU v6e Trillium (32 GB HBM)', category: 'tpu', catLabel: 'Google TPU', vram: 32, bw: 1640, tflops: 1836, tdp: 300, cost: 1.80 },
+            { id: 'tpu_ironwood', name: 'Google Ironwood TPU v7 (192 GB HBM3e)', category: 'tpu', catLabel: 'Google TPU', vram: 192, bw: 7400, tflops: 4614, tdp: 600, cost: 3.50 },
+            { id: 'tpu_8i', name: 'Google TPU 8i Inference (288 GB HBM)', category: 'tpu', catLabel: 'Google TPU', vram: 288, bw: 9600, tflops: 5000, tdp: 650, cost: 4.10 },
+
+            // Apple Silicon (macOS Unified Memory)
+            { id: 'apple_m1max', name: 'Apple M1 Max (64 GB Unified)', category: 'apple', catLabel: 'Apple Silicon', vram: 64, bw: 400, tflops: 40, tdp: 60, cost: 0.25 },
+            { id: 'apple_m2ultra', name: 'Apple M2 Ultra (192 GB Unified)', category: 'apple', catLabel: 'Apple Silicon', vram: 192, bw: 800, tflops: 85, tdp: 120, cost: 0.50 },
+            { id: 'apple_m3max', name: 'Apple M3 Max (128 GB Unified)', category: 'apple', catLabel: 'Apple Silicon', vram: 128, bw: 400, tflops: 65, tdp: 78, cost: 0.35 },
+            { id: 'apple_m4max', name: 'Apple M4 Max (128 GB Unified)', category: 'apple', catLabel: 'Apple Silicon', vram: 128, bw: 546, tflops: 90, tdp: 90, cost: 0.40 },
+            { id: 'apple_m4ultra', name: 'Apple M4 Ultra (256 GB Unified)', category: 'apple', catLabel: 'Apple Silicon', vram: 256, bw: 1092, tflops: 180, tdp: 150, cost: 0.70 },
+
+            // AMD Instinct & Radeon
+            { id: 'amd_7900xtx', name: 'AMD Radeon RX 7900 XTX (24 GB)', category: 'amd', catLabel: 'AMD GPU', vram: 24, bw: 960, tflops: 245, tdp: 355, cost: 0.45 },
+            { id: 'amd_mi300x', name: 'AMD Instinct MI300X (192 GB HBM3)', category: 'amd', catLabel: 'AMD Sunucu', vram: 192, bw: 5300, tflops: 2614, tdp: 750, cost: 3.40 },
+            { id: 'amd_mi325x', name: 'AMD Instinct MI325X (256 GB HBM3e)', category: 'amd', catLabel: 'AMD Sunucu', vram: 256, bw: 6000, tflops: 2614, tdp: 1000, cost: 3.90 }
+        ];
+
+        // Representative subset of hardware for the horizontal benchmark bar chart
+        const BENCHMARK_HW_IDS = [
+            'rtx3060_12',
+            'rtx4090',
+            'rtx5090',
+            'apple_m4max',
+            'nvidia_l40s',
+            'nvidia_a100_80',
+            'nvidia_h100',
+            'nvidia_h200',
+            'amd_mi300x',
+            'tpu_ironwood',
+            'nvidia_b300',
+            'tpu_8i',
+            'nvidia_rubin'
+        ];
+
+        // ============================================================================
+        // 2. APPLICATION STATE
+        // ============================================================================
+        let state = {
+            categoryFilter: 'all',
+            selectedHwId: 'tpu_ironwood',
+            chipCount: 1,
+            // Hardware per-chip active specs (can be customized)
+            chipVram: 192,
+            chipBw: 7400,
+            chipTflops: 4614,
+            chipTdp: 600,
+            chipCost: 3.50,
+            // Model specs
+            totalParamsB: 70,
+            isMoe: false,
+            activeParamsB: 70,
+            weightBits: 8,
+            // Workload specs
+            batchSize: 1,
+            contextLength: 4096,
+            kvBits: 8,
+            specMultiplier: 1.0,
+            activeTab: 'batch'
+        };
+
+        let batchChartInstance = null;
+        let benchmarkChartInstance = null;
+
+        // ============================================================================
+        // 3. INITIALIZATION & UI POPULATION
+        // ============================================================================
+        window.onload = function () {
+            populateHardwareDropdown();
+            syncHardwareInputsFromSelected();
+            initCharts();
+            updateCalculations();
+        };
+
+        function populateHardwareDropdown() {
+            const select = document.getElementById('hardwareSelect');
+            select.innerHTML = '';
+
+            const filtered = HARDWARE_DB.filter(hw => 
+                state.categoryFilter === 'all' || hw.category === state.categoryFilter
+            );
+
+            filtered.forEach(hw => {
+                const opt = document.createElement('option');
+                opt.value = hw.id;
+                const bwFormatted = hw.bw >= 1000 ? (hw.bw / 1000).toFixed(2) + ' TB/sn' : hw.bw + ' GB/sn';
+                opt.textContent = `${hw.name} — [${hw.vram} GB | ${bwFormatted}]`;
+                if (hw.id === state.selectedHwId) opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            // If current selectedHwId wasn't in the filtered list, select the first one
+            if (filtered.length > 0 && !filtered.some(h => h.id === state.selectedHwId)) {
+                state.selectedHwId = filtered[0].id;
+                select.value = state.selectedHwId;
+                syncHardwareInputsFromSelected();
+            }
+        }
+
+        function filterHardwareCategory(cat) {
+            state.categoryFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn active px-2 py-1.5 rounded-lg font-medium bg-sky-500 text-slate-950 transition';
+                } else {
+                    btn.className = 'cat-btn px-2 py-1.5 rounded-lg font-medium bg-slate-800/80 text-slate-300 hover:bg-slate-700 transition';
+                }
+            });
+            populateHardwareDropdown();
+            updateCalculations();
+        }
+
+        function syncHardwareInputsFromSelected() {
+            const hw = HARDWARE_DB.find(h => h.id === state.selectedHwId) || HARDWARE_DB[0];
+            state.chipVram = hw.vram;
+            state.chipBw = hw.bw;
+            state.chipTflops = hw.tflops;
+            state.chipTdp = hw.tdp;
+            state.chipCost = hw.cost;
+
+            document.getElementById('customVramInput').value = hw.vram;
+            document.getElementById('customBwInput').value = hw.bw;
+            document.getElementById('customTflopsInput').value = hw.tflops;
+            document.getElementById('customCostInput').value = hw.cost;
+            document.getElementById('hwCategoryBadge').textContent = hw.catLabel;
+        }
+
+        function onHardwareChange() {
+            state.selectedHwId = document.getElementById('hardwareSelect').value;
+            syncHardwareInputsFromSelected();
+            updateCalculations();
+        }
+
+        function onCustomHwEdit() {
+            state.chipVram = Math.max(1, parseFloat(document.getElementById('customVramInput').value) || 16);
+            state.chipBw = Math.max(10, parseFloat(document.getElementById('customBwInput').value) || 500);
+            state.chipTflops = Math.max(10, parseFloat(document.getElementById('customTflopsInput').value) || 200);
+            state.chipCost = Math.max(0.01, parseFloat(document.getElementById('customCostInput').value) || 1.0);
+            document.getElementById('hwCategoryBadge').textContent = 'Özel Ayar';
+            updateCalculations();
+        }
+
+        function setChipCount(count) {
+            state.chipCount = count;
+            document.getElementById('chipCountLabel').textContent = `${count}x Çip`;
+            document.querySelectorAll('.chip-btn').forEach(btn => {
+                if (parseInt(btn.dataset.chips) === count) {
+                    btn.className = 'chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-sky-500 text-slate-950 transition';
+                } else {
+                    btn.className = 'chip-btn px-2 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                }
+            });
+            updateCalculations();
+        }
+
+        // ============================================================================
+        // 4. MODEL & WORKLOAD HANDLERS
+        // ============================================================================
+        function onModelPresetChange() {
+            const val = document.getElementById('modelPresetSelect').value;
+            if (val === 'custom') return;
+
+            if (val === 'moe_mixtral') {
+                state.totalParamsB = 47;
+                state.isMoe = true;
+                state.activeParamsB = 13;
+            } else if (val === 'moe_qwen') {
+                state.totalParamsB = 140;
+                state.isMoe = true;
+                state.activeParamsB = 36;
+            } else if (val === 'moe_deepseek') {
+                state.totalParamsB = 671;
+                state.isMoe = true;
+                state.activeParamsB = 37;
+            } else {
+                state.totalParamsB = parseFloat(val);
+                state.isMoe = false;
+                state.activeParamsB = state.totalParamsB;
+            }
+
+            syncModelUI();
+            updateCalculations();
+        }
+
+        function onParamsSliderInput() {
+            state.totalParamsB = parseFloat(document.getElementById('totalParamsSlider').value);
+            document.getElementById('modelPresetSelect').value = 'custom';
+            if (!state.isMoe) {
+                state.activeParamsB = state.totalParamsB;
+            } else if (state.activeParamsB > state.totalParamsB) {
+                state.activeParamsB = state.totalParamsB;
+            }
+            syncModelUI();
+            updateCalculations();
+        }
+
+        function onMoeToggle() {
+            state.isMoe = document.getElementById('moeToggle').checked;
+            if (state.isMoe) {
+                state.activeParamsB = Math.max(1, Math.round(state.totalParamsB * 0.2));
+            } else {
+                state.activeParamsB = state.totalParamsB;
+            }
+            syncModelUI();
+            updateCalculations();
+        }
+
+        function onActiveParamsInput() {
+            state.activeParamsB = Math.min(state.totalParamsB, parseFloat(document.getElementById('activeParamsSlider').value));
+            syncModelUI();
+            updateCalculations();
+        }
+
+        function syncModelUI() {
+            document.getElementById('totalParamsSlider').value = state.totalParamsB;
+            document.getElementById('totalParamsValue').textContent = `${state.totalParamsB} Milyar (${state.totalParamsB}B)`;
+            document.getElementById('moeToggle').checked = state.isMoe;
+
+            const activeWrap = document.getElementById('activeSliderWrap');
+            const moeBadge = document.getElementById('moeBadge');
+            if (state.isMoe) {
+                activeWrap.classList.remove('hidden');
+                moeBadge.classList.remove('hidden');
+                document.getElementById('activeParamsSlider').max = Math.max(10, state.totalParamsB);
+                document.getElementById('activeParamsSlider').value = state.activeParamsB;
+                document.getElementById('activeParamsValue').textContent = `${state.activeParamsB}B Aktif / Token`;
+            } else {
+                activeWrap.classList.add('hidden');
+                moeBadge.classList.add('hidden');
+                document.getElementById('activeParamsValue').textContent = `${state.totalParamsB}B Aktif (Dense)`;
+            }
+        }
+
+        function setWeightBits(bits) {
+            state.weightBits = bits;
+            const labels = {
+                16: '16-bit (FP16 / BF16)',
+                8: '8-bit (FP8 / INT8)',
+                6: '6-bit (GGUF Q6_K)',
+                4.5: '4.5-bit (GGUF Q4_K_M)',
+                4: '4-bit (INT4 / AWQ)'
+            };
+            document.getElementById('quantLabel').textContent = labels[bits] || `${bits}-bit`;
+
+            document.querySelectorAll('.quant-btn').forEach(btn => {
+                if (parseFloat(btn.dataset.bits) === bits) {
+                    btn.className = 'quant-btn py-2 rounded-lg font-mono font-semibold bg-sky-500 text-slate-950 transition';
+                } else {
+                    btn.className = 'quant-btn py-2 rounded-lg font-mono font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                }
+            });
+            updateCalculations();
+        }
+
+        function setBatchQuick(val) {
+            document.getElementById('batchSizeSlider').value = val;
+            updateCalculations();
+        }
+
+        function setContextQuick(val) {
+            document.getElementById('contextLengthSlider').value = val;
+            updateCalculations();
+        }
+
+        // ============================================================================
+        // 5. CORE PHYSICS & ROOFLINE LLM INFERENCE ENGINE
+        // ============================================================================
+        function computeMetricsForHardware(chipVram, chipBw, chipTflops, chipCount, chipCost, chipTdp, customBatchSize = null) {
+            const batch = customBatchSize !== null ? customBatchSize : state.batchSize;
+
+            // Multi-chip scaling efficiency (NVLink / ICI overhead ~92% for multi-chip)
+            const scalingEfficiency = chipCount === 1 ? 1.0 : (chipCount <= 4 ? 0.92 : 0.86);
+            const totalVramGb = chipVram * chipCount;
+            const effectiveBwGbs = chipBw * chipCount * scalingEfficiency;
+            const effectiveTflops = chipTflops * chipCount * scalingEfficiency;
+
+            // 1. Model Weights in Memory (All parameters must reside in VRAM)
+            const modelWeightsGb = (state.totalParamsB * state.weightBits) / 8.0;
+
+            // 2. Active Weights Read Per Token Step (For Dense = total, for MoE = active + small router overhead)
+            const activeParamsForStep = state.isMoe ? state.activeParamsB : state.totalParamsB;
+            const activeWeightsReadGb = (activeParamsForStep * state.weightBits) / 8.0;
+
+            // 3. KV Cache Calculation
+            // Modern GQA (Grouped Query Attention like Llama-3 70B) uses ~0.16 MB per token at FP8 for 70B.
+            // Formula scaled smoothly by active/total architecture size and KV bit depth:
+            const kvFactorPerBPerTokenBytes = 2400; // Realistic GQA empirical baseline bytes per B-param per token at 8-bit
+            const kvPerUserGb = (activeParamsForStep * state.contextLength * kvFactorPerBPerTokenBytes * (state.kvBits / 8.0)) / 1e9;
+            const totalKvCacheGb = kvPerUserGb * batch;
+
+            // 4. Activation & CUDA/XLA Runtime Overhead (~5% of weights + 0.8 GB base + small batch activation buffer)
+            const overheadGb = 0.8 + (modelWeightsGb * 0.04) + (batch * 0.03);
+
+            // 5. Total Required Memory & Max Possible Batch Size before OOM
+            const totalRequiredMemGb = modelWeightsGb + totalKvCacheGb + overheadGb;
+            const fitsInMemory = totalRequiredMemGb <= totalVramGb;
+
+            const availableForKvGb = totalVramGb - modelWeightsGb - (0.8 + modelWeightsGb * 0.04);
+            const maxBatchSize = availableForKvGb > 0 ? Math.floor(availableForKvGb / (kvPerUserGb + 0.03)) : 0;
+
+            // 6. Roofline Step Time (Memory Transfer Time vs Compute Time)
+            // During each token decode step, chip reads active weights once + reads active KV cache for all users in batch
+            const dataReadPerStepGb = activeWeightsReadGb + totalKvCacheGb;
+            const memoryTimeSec = dataReadPerStepGb / effectiveBwGbs;
+
+            // Compute time per decode step: 2 FLOPs per active parameter per item in batch
+            const totalFlopsPerStepTera = (2 * activeParamsForStep * batch) / 1000.0; // in TeraFLOPs
+            const computeTimeSec = totalFlopsPerStepTera / (effectiveTflops * 0.65); // 65% realistic MFU
+
+            // Total step latency is governed by the slower of memory vs compute + small communication latency
+            const stepTimeSec = Math.max(memoryTimeSec, computeTimeSec) * 1.03;
+            const isComputeBound = computeTimeSec > memoryTimeSec;
+
+            // 7. Token/s Speeds (with Speculative Decoding factor diminishing at large batch sizes)
+            const effectiveSpecMult = 1 + (state.specMultiplier - 1) * Math.max(0.15, 1 - (batch / 48));
+            const perUserTps = (1.0 / stepTimeSec) * effectiveSpecMult;
+            const totalSystemTps = perUserTps * batch;
+            const interTokenLatencyMs = 1000.0 / perUserTps;
+
+            //Actual Bandwidth Consumed per second
+            const actualBwUsedTbs = (dataReadPerStepGb / stepTimeSec) / 1000.0;
+
+            // 8. Cost & Power Metrics
+            const totalHourlyCost = chipCost * chipCount;
+            const tokensPerHour = totalSystemTps * 3600;
+            const costPerMillionTokens = tokensPerHour > 0 ? (totalHourlyCost / (tokensPerHour / 1e6)) : 0;
+            const totalWatts = chipTdp * chipCount;
+            const tokensPerSecPerWatt = totalWatts > 0 ? (totalSystemTps / totalWatts) : 0;
+
+            return {
+                totalVramGb,
+                effectiveBwGbs,
+                modelWeightsGb,
+                activeWeightsReadGb,
+                kvPerUserGb,
+                totalKvCacheGb,
+                overheadGb,
+                totalRequiredMemGb,
+                fitsInMemory,
+                maxBatchSize,
+                dataReadPerStepGb,
+                perUserTps,
+                totalSystemTps,
+                interTokenLatencyMs,
+                actualBwUsedTbs,
+                isComputeBound,
+                costPerMillionTokens,
+                tokensPerSecPerWatt
+            };
+        }
+
+        // ============================================================================
+        // 6. MAIN UI UPDATE CYCLE
+        // ============================================================================
+        function updateCalculations() {
+            state.batchSize = parseInt(document.getElementById('batchSizeSlider').value);
+            state.contextLength = parseInt(document.getElementById('contextLengthSlider').value);
+            state.kvBits = parseInt(document.getElementById('kvCacheBitsSelect').value);
+            state.specMultiplier = parseFloat(document.getElementById('specDecodeSelect').value);
+
+            document.getElementById('batchSizeValue').textContent = `${state.batchSize} Kullanıcı`;
+            document.getElementById('contextLengthValue').textContent = `${state.contextLength.toLocaleString('tr-TR')} Token`;
+
+            const m = computeMetricsForHardware(
+                state.chipVram,
+                state.chipBw,
+                state.chipTflops,
+                state.chipCount,
+                state.chipCost,
+                state.chipTdp
+            );
+
+            // 1. Update Status Banner
+            const banner = document.getElementById('memoryStatusBanner');
+            const iconBox = document.getElementById('statusIconBox');
+            const icon = document.getElementById('statusIcon');
+            const title = document.getElementById('statusTitle');
+            const badge = document.getElementById('statusUtilizationBadge');
+            const desc = document.getElementById('statusDescription');
+            const memNums = document.getElementById('statusMemoryNumbers');
+
+            const utilPct = Math.round((m.totalRequiredMemGb / m.totalVramGb) * 100);
+            memNums.textContent = `${m.totalRequiredMemGb.toFixed(1)} GB / ${m.totalVramGb.toFixed(0)} GB`;
+
+            if (m.fitsInMemory) {
+                banner.className = 'rounded-2xl p-4 border border-emerald-500/30 bg-emerald-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all';
+                iconBox.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0';
+                icon.className = 'ph-bold ph-check-circle text-2xl';
+                title.textContent = 'Model ve KV Cache Belleğe Sığıyor (Çalışmaya Hazır)';
+                badge.className = 'text-xs font-mono px-2 py-0.5 rounded font-semibold bg-emerald-500/20 text-emerald-300';
+                badge.textContent = `%${utilPct} Bellek Doluluğu`;
+                desc.textContent = `Bu donanım kurulumunda OOM (Bellek Hatası) almadan maksimum ${m.maxBatchSize} eşzamanlı kullanıcıya (Batch Size) çıkabilirsiniz.`;
+            } else {
+                const neededChips = Math.ceil(m.totalRequiredMemGb / state.chipVram);
+                banner.className = 'rounded-2xl p-4 border border-rose-500/40 bg-rose-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all';
+                iconBox.className = 'w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0';
+                icon.className = 'ph-bold ph-warning-octagon text-2xl';
+                title.textContent = 'BELLEK YETERSİZ (OOM - Out of Memory)!';
+                badge.className = 'text-xs font-mono px-2 py-0.5 rounded font-semibold bg-rose-500/30 text-rose-200';
+                badge.textContent = `%${utilPct} Aşım`;
+                desc.textContent = `Bu kurulum için en az ${neededChips}x Çip seçmeli, kuantizasyonu (örn. 4-bit) düşürmeli veya Batch Size / Bağlam uzunluğunu azaltmalısınız.`;
+            }
+
+            // 2. Update 4 KPI Cards
+            document.getElementById('kpiDataPerToken').textContent = `${m.dataReadPerStepGb.toFixed(1)} GB`;
+            document.getElementById('kpiTotalBandwidthUsed').textContent = `Saniyede: ${m.actualBwUsedTbs.toFixed(2)} TB/sn veri akışı`;
+
+            document.getElementById('kpiSingleUserTps').textContent = `${m.perUserTps.toFixed(1)} tok/sn`;
+            document.getElementById('kpiInterTokenLatency').textContent = `Gecikme (ITL): ${m.interTokenLatencyMs.toFixed(1)} ms/token`;
+
+            document.getElementById('kpiSystemThroughput').textContent = `${m.totalSystemTps.toFixed(0)} tok/sn`;
+            document.getElementById('kpiMaxBatchCap').textContent = m.maxBatchSize > 0 ? `Bellek Tavanı: Max ${m.maxBatchSize} Batch` : `Bellek Tavanı: Model Sığmıyor`;
+            document.getElementById('kpiBatchCountInline').textContent = state.batchSize;
+
+            document.getElementById('kpiCostPerMillion').textContent = `$${m.costPerMillionTokens.toFixed(2)} / 1M`;
+            document.getElementById('kpiTokensPerWatt').textContent = `Verim: ${m.tokensPerSecPerWatt.toFixed(2)} tok/sn/Watt`;
+
+            // 3. Update Live Formula Box
+            const boundBadge = document.getElementById('boundStateBadge');
+            if (m.isComputeBound) {
+                boundBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                boundBadge.textContent = 'İşlem Gücü Sınırlı (Compute-Bound Yüksek Batch)';
+            } else {
+                boundBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30';
+                boundBadge.textContent = 'Bellek Bant Genişliği Sınırlı (Memory-Bound)';
+            }
+
+            const formulaEl = document.getElementById('liveFormulaText');
+            formulaEl.innerHTML = `
+                <span class="text-sky-400 font-bold">${m.effectiveBwGbs.toFixed(0)} GB/sn</span> (Bant Genişliği) ÷ 
+                [<span class="text-emerald-400 font-bold">${m.activeWeightsReadGb.toFixed(1)} GB</span> (Aktif Ağırlık) + 
+                <span class="text-amber-400 font-bold">${m.totalKvCacheGb.toFixed(1)} GB</span> (${state.batchSize}x KV Cache)] 
+                ${state.specMultiplier > 1 ? `× <span class="text-purple-400 font-bold">${state.specMultiplier}x</span> (SpecDecode)` : ''}
+                = <span class="text-white font-bold">${m.perUserTps.toFixed(1)} tok/sn</span> (Kullanıcı Başı) 
+                × <span class="text-amber-400 font-bold">${state.batchSize} Batch</span> 
+                = <span class="text-emerald-400 font-bold underline">${m.totalSystemTps.toFixed(0)} Toplam Token/sn</span>
+            `;
+
+            // 4. Update Stacked Memory Bar
+            document.getElementById('legendWeightGb').textContent = `${m.modelWeightsGb.toFixed(1)} GB`;
+            document.getElementById('legendKvGb').textContent = `${m.totalKvCacheGb.toFixed(1)} GB`;
+            document.getElementById('legendOverheadGb').textContent = `${m.overheadGb.toFixed(1)} GB`;
+
+            const scaleDenom = Math.max(m.totalVramGb, m.totalRequiredMemGb);
+            const wPct = Math.min(100, (m.modelWeightsGb / scaleDenom) * 100);
+            const kvPct = Math.min(100 - wPct, (m.totalKvCacheGb / scaleDenom) * 100);
+            const ovPct = Math.min(100 - wPct - kvPct, (m.overheadGb / scaleDenom) * 100);
+
+            const barW = document.getElementById('barWeights');
+            const barKv = document.getElementById('barKvCache');
+            const barOv = document.getElementById('barOverhead');
+
+            barW.style.width = `${wPct}%`;
+            barW.textContent = wPct > 8 ? `Model (${m.modelWeightsGb.toFixed(0)}G)` : '';
+            barW.className = `h-full ${m.fitsInMemory ? 'bg-sky-500' : 'bg-rose-500'} transition-all duration-300 flex items-center justify-center text-[10px] font-mono font-bold text-slate-950 overflow-hidden`;
+
+            barKv.style.width = `${kvPct}%`;
+            barKv.textContent = kvPct > 6 ? `KV (${m.totalKvCacheGb.toFixed(0)}G)` : '';
+
+            barOv.style.width = `${ovPct}%`;
+            barOv.textContent = ovPct > 6 ? `Sys` : '';
+
+            // 5. Update Charts & Full Table
+            updateCharts(m);
+            renderComparisonTable();
+        }
+
+        // ============================================================================
+        // 7. INTERACTIVE CHARTS (Chart.js)
+        // ============================================================================
+        function initCharts() {
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'JetBrains Mono', monospace";
+
+            const ctxBatch = document.getElementById('batchScalingChart').getContext('2d');
+            batchChartInstance = new Chart(ctxBatch, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Toplam Sistem Üretimi (Toplam Token/sn)',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'yTotal'
+                        },
+                        {
+                            label: 'Kullanıcı Başına Hız (Token/sn)',
+                            data: [],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2.5,
+                            borderDash: [4, 4],
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'ySingle'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 14, font: { size: 11 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Batch Size (Eşzamanlı Kullanıcı Sayısı)', color: '#cbd5e1' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                        },
+                        yTotal: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Toplam Sistem Üretimi (Token/sn)', color: '#f59e0b' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                        },
+                        ySingle: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Kullanıcı Başı Hız (Token/sn)', color: '#10b981' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+
+            const ctxBench = document.getElementById('hardwareBenchmarkChart').getContext('2d');
+            benchmarkChartInstance = new Chart(ctxBench, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Tekil Kullanıcı Hızı (Token/sn @ Batch=1)',
+                            data: [],
+                            backgroundColor: [],
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(ctx) {
+                                    const val = ctx.raw;
+                                    return val === 0 ? ' Bellek Yetersiz (OOM - Sığmıyor)' : ` Hız: ${val.toFixed(1)} Token/sn`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Tek Kullanıcı Tavan Hızı (Token/sn)', color: '#cbd5e1' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            // 1. Update Batch Scaling Chart (Batch 1 to 128)
+            const batchPoints = [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128];
+            const labels = [];
+            const totalTpsData = [];
+            const singleTpsData = [];
+
+            batchPoints.forEach(b => {
+                const res = computeMetricsForHardware(
+                    state.chipVram, state.chipBw, state.chipTflops,
+                    state.chipCount, state.chipCost, state.chipTdp, b
+                );
+                labels.push(res.fitsInMemory ? `${b}` : `${b} (OOM)`);
+                totalTpsData.push(Math.round(res.totalSystemTps));
+                singleTpsData.push(Number(res.perUserTps.toFixed(1)));
+            });
+
+            batchChartInstance.data.labels = labels;
+            batchChartInstance.data.datasets[0].data = totalTpsData;
+            batchChartInstance.data.datasets[1].data = singleTpsData;
+            batchChartInstance.update();
+
+            // 2. Update Multi-Hardware Benchmark Chart
+            document.getElementById('benchModelLabel').textContent = `${state.totalParamsB}B (${state.weightBits}-bit)`;
+            document.getElementById('benchChipMultLabel').textContent = `${state.chipCount}x Çip`;
+
+            const benchLabels = [];
+            const benchValues = [];
+            const benchColors = [];
+
+            BENCHMARK_HW_IDS.forEach(id => {
+                const hw = HARDWARE_DB.find(h => h.id === id);
+                if (!hw) return;
+                const res = computeMetricsForHardware(hw.vram, hw.bw, hw.tflops, state.chipCount, hw.cost, hw.tdp, 1);
+                benchLabels.push(`${hw.name} (${hw.vram * state.chipCount}G)`);
+                if (res.fitsInMemory) {
+                    benchValues.push(Number(res.perUserTps.toFixed(1)));
+                    if (hw.id === state.selectedHwId) {
+                        benchColors.push('#10b981'); // Highlight current hardware in emerald
+                    } else if (hw.category === 'tpu') {
+                        benchColors.push('#38bdf8'); // Google TPU in cyan
+                    } else {
+                        benchColors.push('#6366f1'); // Others in indigo
+                    }
+                } else {
+                    benchValues.push(0);
+                    benchColors.push('#f43f5e');
+                }
+            });
+
+            benchmarkChartInstance.data.labels = benchLabels;
+            benchmarkChartInstance.data.datasets[0].data = benchValues;
+            benchmarkChartInstance.data.datasets[0].backgroundColor = benchColors;
+            benchmarkChartInstance.update();
+        }
+
+        function switchChartTab(tab) {
+            state.activeTab = tab;
+            const batchCont = document.getElementById('chartBatchContainer');
+            const benchCont = document.getElementById('chartBenchmarkContainer');
+            const btnBatch = document.getElementById('tabBtnBatch');
+            const btnBench = document.getElementById('tabBtnBenchmark');
+
+            if (tab === 'batch') {
+                batchCont.classList.remove('hidden');
+                benchCont.classList.add('hidden');
+                btnBatch.className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-500 text-slate-950 transition flex items-center gap-1.5';
+                btnBench.className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5';
+            } else {
+                batchCont.classList.add('hidden');
+                benchCont.classList.remove('hidden');
+                btnBench.className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-500 text-slate-950 transition flex items-center gap-1.5';
+                btnBatch.className = 'px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1.5';
+                benchmarkChartInstance.resize();
+            }
+        }
+
+        // ============================================================================
+        // 8. FULL COMPARISON TABLE RENDERER
+        // ============================================================================
+        function renderComparisonTable() {
+            const tbody = document.getElementById('hardwareTableBody');
+            const query = (document.getElementById('tableSearchInput').value || '').toLowerCase().trim();
+
+            document.getElementById('tableModelSummary').textContent = 
+                `${state.totalParamsB}B ${state.isMoe ? `(${state.activeParamsB}B Aktif MoE)` : ''} @ ${state.weightBits}-bit`;
+            document.getElementById('tableChipMultSummary').textContent = `${state.chipCount}x Çip`;
+
+            tbody.innerHTML = '';
+
+            HARDWARE_DB.forEach(hw => {
+                if (query && !hw.name.toLowerCase().includes(query) && !hw.catLabel.toLowerCase().includes(query)) {
+                    return;
+                }
+
+                const resSingle = computeMetricsForHardware(hw.vram, hw.bw, hw.tflops, state.chipCount, hw.cost, hw.tdp, 1);
+                const resBatch = computeMetricsForHardware(hw.vram, hw.bw, hw.tflops, state.chipCount, hw.cost, hw.tdp, state.batchSize);
+
+                const isSelected = hw.id === state.selectedHwId;
+                const tr = document.createElement('tr');
+                tr.className = isSelected 
+                    ? 'bg-sky-500/15 hover:bg-sky-500/20 transition' 
+                    : 'hover:bg-slate-800/50 transition';
+
+                const totalVram = hw.vram * state.chipCount;
+                const totalBw = hw.bw * state.chipCount;
+                const bwText = totalBw >= 1000 ? `${(totalBw / 1000).toFixed(2)} TB/sn` : `${totalBw} GB/sn`;
+
+                let statusHtml = '';
+                if (resBatch.fitsInMemory) {
+                    statusHtml = `<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">Sığıyor (%${Math.round((resBatch.totalRequiredMemGb / totalVram)*100)})</span>`;
+                } else if (resSingle.fitsInMemory) {
+                    statusHtml = `<span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">Batch=${state.batchSize} Aşıyor</span>`;
+                } else {
+                    statusHtml = `<span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold">OOM (Yetersiz)</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-sans font-semibold text-white">
+                        ${state.chipCount > 1 ? `<span class="text-sky-400 font-mono">${state.chipCount}x</span> ` : ''}${hw.name}
+                    </td>
+                    <td class="py-2.5 px-3 text-slate-400">${hw.catLabel}</td>
+                    <td class="py-2.5 px-3 text-right font-bold text-slate-200">${totalVram} GB</td>
+                    <td class="py-2.5 px-3 text-right text-sky-400">${bwText}</td>
+                    <td class="py-2.5 px-3 text-center">${statusHtml}</td>
+                    <td class="py-2.5 px-3 text-right font-bold ${resSingle.fitsInMemory ? 'text-emerald-400' : 'text-slate-600'}">
+                        ${resSingle.fitsInMemory ? `${resSingle.perUserTps.toFixed(1)} tok/sn` : '—'}
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-bold ${resBatch.fitsInMemory ? 'text-amber-400' : 'text-slate-600'}">
+                        ${resBatch.fitsInMemory ? `${resBatch.totalSystemTps.toFixed(0)} tok/sn` : '—'}
+                    </td>
+                    <td class="py-2.5 px-3 text-right text-slate-300">
+                        ${resSingle.maxBatchSize > 0 ? `${resSingle.maxBatchSize} Kullanıcı` : '0'}
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <button onclick="selectHardwareFromTable('${hw.id}')" class="px-2.5 py-1 rounded-lg text-[11px] font-sans font-semibold ${isSelected ? 'bg-sky-500 text-slate-950' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'} transition">
+                            ${isSelected ? 'Seçili' : 'Seç'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function selectHardwareFromTable(hwId) {
+            state.categoryFilter = 'all';
+            filterHardwareCategory('all');
+            state.selectedHwId = hwId;
+            document.getElementById('hardwareSelect').value = hwId;
+            syncHardwareInputsFromSelected();
+            updateCalculations();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ============================================================================
+        // 9. QUICK SCENARIO PRESETS & SHARE EXPORT
+        // ============================================================================
+        function loadScenario(key) {
+            state.categoryFilter = 'all';
+            filterHardwareCategory('all');
+
+            if (key === 'rtx3060_8b') {
+                state.selectedHwId = 'rtx3060_12';
+                setChipCount(1);
+                document.getElementById('modelPresetSelect').value = '8';
+                onModelPresetChange();
+                setWeightBits(4.5);
+                setBatchQuick(1);
+                setContextQuick(4096);
+            } else if (key === 'mac_70b') {
+                state.selectedHwId = 'apple_m4max';
+                setChipCount(1);
+                document.getElementById('modelPresetSelect').value = '70';
+                onModelPresetChange();
+                setWeightBits(4.5);
+                setBatchQuick(1);
+                setContextQuick(8192);
+            } else if (key === 'l40s_70b') {
+                state.selectedHwId = 'nvidia_l40s';
+                setChipCount(2);
+                document.getElementById('modelPresetSelect').value = '70';
+                onModelPresetChange();
+                setWeightBits(8);
+                setBatchQuick(8);
+                setContextQuick(4096);
+            } else if (key === 'ironwood_70b') {
+                state.selectedHwId = 'tpu_ironwood';
+                setChipCount(1);
+                document.getElementById('modelPresetSelect').value = '70';
+                onModelPresetChange();
+                setWeightBits(8);
+                setBatchQuick(1);
+                setContextQuick(4096);
+            } else if (key === 'rubin_deepseek') {
+                state.selectedHwId = 'tpu_8i';
+                setChipCount(4);
+                document.getElementById('modelPresetSelect').value = 'moe_deepseek';
+                onModelPresetChange();
+                setWeightBits(8);
+                setBatchQuick(32);
+                setContextQuick(8192);
+            }
+
+            document.getElementById('hardwareSelect').value = state.selectedHwId;
+            syncHardwareInputsFromSelected();
+            updateCalculations();
+        }
+
+        function resetToIronwoodDemo() {
+            loadScenario('ironwood_70b');
+        }
+
+        function openShareModal() {
+            const hw = HARDWARE_DB.find(h => h.id === state.selectedHwId);
+            const hwName = hw ? hw.name : 'Özel Donanım';
+            const m = computeMetricsForHardware(
+                state.chipVram, state.chipBw, state.chipTflops,
+                state.chipCount, state.chipCost, state.chipTdp
+            );
+
+            const reportText = `📊 SysArticles AI Altyapı ve LLM Çıkarım Analizi
+🔗 Hesaplayıcı: https://aicalc.sysarticles.com
+
+🖥️ Donanım: ${state.chipCount}x ${hwName} (${m.totalVramGb} GB VRAM | ${(m.effectiveBwGbs/1000).toFixed(2)} TB/sn Bant Genişliği)
+🧠 Model: ${state.totalParamsB}B Parametre ${state.isMoe ? `(MoE - ${state.activeParamsB}B Aktif)` : '(Dense)'} @ ${state.weightBits}-bit
+👥 İş Yükü: ${state.batchSize} Eşzamanlı Kullanıcı (Batch) | ${state.contextLength} Token Bağlam
+
+⚡ Performans & Bellek Darboğazı Sonuçları:
+• 1 Adımda Bellekten Okunan Veri: ${m.dataReadPerStepGb.toFixed(1)} GB (${m.actualBwUsedTbs.toFixed(2)} TB/sn akış)
+• Kullanıcı Başına Hız: ${m.perUserTps.toFixed(1)} token/sn (ITL: ${m.interTokenLatencyMs.toFixed(1)} ms)
+• Toplam Sistem Üretimi (Throughput): ${m.totalSystemTps.toFixed(0)} token/sn
+• Toplam Bellek Kullanımı: ${m.totalRequiredMemGb.toFixed(1)} GB / ${m.totalVramGb} GB (${m.fitsInMemory ? '✅ Uygun - Max ' + m.maxBatchSize + ' Batch' : '❌ Bellek Yetersiz / OOM'})
+• Tahmini Birim Maliyet: $${m.costPerMillionTokens.toFixed(2)} / 1M Token
+
+#AIInfrastructure #LLM #GPU #TPU #SysArticles`;
+
+            document.getElementById('shareTextarea').value = reportText;
+            document.getElementById('copyFeedback').classList.add('hidden');
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+        }
+
+        function copyReportToClipboard() {
+            const textarea = document.getElementById('shareTextarea');
+            textarea.select();
+            document.execCommand('copy');
+            const feedback = document.getElementById('copyFeedback');
+            feedback.classList.remove('hidden');
+            setTimeout(() => feedback.classList.add('hidden'), 3000);
+        }
+    </script>
+</body>
+</html>
